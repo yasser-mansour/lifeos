@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write  # needed by publish-release to create the GitHub Release
+
 jobs:
   safety-and-tests:
     name: Safety scan + backend tests
