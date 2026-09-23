@@ -1,0 +1,114 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Focus — LIFEOS{% endblock %}
+{% block content %}
+<div class="flex-col items-center justify-center" style="text-align:center;">
+  <div class="text-xl weight-semibold" style="margin-bottom:var(--space-1); letter-spacing:-0.01em;">{{ session.focus_title|upper }}</div>
+  <div class="text-sm text-muted" style="margin-bottom:var(--space-8);">{{ session.focus_subtitle }}</div>
+
+  <div id="timer-display" class="mono weight-semibold" style="font-size:88px; letter-spacing:-0.02em; line-height:1; font-variant-numeric:tabular-nums; margin-bottom:var(--space-2);">00:00:00</div>
+  <div id="timer-sub" class="text-secondary text-md" style="margin-bottom:var(--space-8);">{{ session.get_mode_display }}{% if session.status == 'paused' %} · Paused{% endif %}</div>
+
+  <div class="flex gap-3">
+    <button id="btn-toggle" class="btn btn-secondary btn-lg" style="width:120px;"></button>
+    <button id="btn-finish" class="btn btn-primary btn-lg" style="width:120px;">Finish</button>
+  </div>
+  <button id="btn-cancel" class="btn btn-ghost btn-sm text-muted" style="margin-top:var(--space-4);">Cancel session</button>
+</div>
+
+<form id="pause-form" method="post" action="{% url 'focus:action_pause' %}" style="display:none;">{% csrf_token %}</form>
+<form id="resume-form" method="post" action="{% url 'focus:action_resume' %}" style="display:none;">{% csrf_token %}</form>
+<form id="finish-form" method="post" action="{% url 'focus:action_finish' %}" style="display:none;">{% csrf_token %}</form>
+<form id="cancel-form" method="post" action="{% url 'focus:action_cancel' %}" style="display:none;">{% csrf_token %}</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  const state = {
+    status: "{{ session.status }}",
+    mode: "{{ session.mode }}",
+    duration: {{ session.duration_seconds }},
+    remaining: {{ session.remaining_seconds|default_if_none:"null" }},
+    completedBeeped: false,
+  };
+
+  const display = document.getElementById("timer-display");
+  const sub = document.getElementById("timer-sub");
+  const toggleBtn = document.getElementById("btn-toggle");
+
+  function formatClock(totalSeconds) {
+    totalSeconds = Math.max(0, Math.floor(totalSeconds));
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  }
+
+  function render() {
+    if (state.remaining !== null && state.mode !== "stopwatch") {
+      display.textContent = formatClock(state.remaining);
+      if (state.remaining <= 0 && !state.completedBeeped) {
+        state.completedBeeped = true;
+        sub.textContent = "Time's up — keep going or finish";
+        display.style.color = "var(--warning)";
+        playBeep();
+      }
+    } else {
+      display.textContent = formatClock(state.duration);
+    }
+    toggleBtn.textContent = state.status === "paused" ? "Resume" : "Pause";
+  }
+
+  function tick() {
+    if (state.status === "active") {
+      state.duration += 1;
+      if (state.remaining !== null) state.remaining -= 1;
+    }
+    render();
+  }
+
+  function playBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+    } catch (e) {}
+  }
+
+  render();
+  setInterval(tick, 1000);
+
+  setInterval(function () {
+    LifeOS.apiFetch("{% url 'focus:active_status' %}").then((r) => r.json()).then((data) => {
+      if (!data.active) {
+        window.location.href = "{% url 'focus:overview' %}";
+        return;
+      }
+      state.status = data.status;
+      state.duration = data.duration_seconds;
+      state.remaining = data.remaining_seconds;
+    });
+  }, 20000);
+
+  document.getElementById("btn-toggle").addEventListener("click", () => {
+    document.getElementById(state.status === "paused" ? "resume-form" : "pause-form").submit();
+  });
+  document.getElementById("btn-finish").addEventListener("click", () => {
+    document.getElementById("finish-form").submit();
+  });
+  document.getElementById("btn-cancel").addEventListener("click", () => {
+    if (confirm("Cancel this session? It will be marked cancelled, not deleted.")) {
+      document.getElementById("cancel-form").submit();
+    }
+  });
+})();
+</script>
+{% endblock %}

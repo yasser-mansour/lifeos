@@ -1,0 +1,5 @@
+{% if back_url %}
+<div class="location-bar">
+  <a href="{{ back_url }}" data-back-link>← {{ back_label|default:"Back" }}</a>
+</div>
+{% endif %}

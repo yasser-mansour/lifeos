@@ -1,0 +1,20 @@
+{% extends "layout/base.html" %}
+{% block title %}Sign in — LIFEOS{% endblock %}
+{% block body %}
+<div class="flex items-center justify-center" style="min-height:100vh; background:var(--bg-secondary);">
+  <div class="surface" style="width:340px; padding:var(--space-8); text-align:center;">
+    <span class="sidebar-mark" style="width:36px;height:36px;border-radius:10px; margin:0 auto var(--space-4); display:block;"></span>
+    <div class="text-md weight-semibold" style="margin-bottom:2px; letter-spacing:-0.01em;">LIFEOS</div>
+    <h1 class="text-sm text-muted" style="margin-bottom:var(--space-5); font-weight:400;">Locked</h1>
+    <form method="post" class="stack">
+      {% csrf_token %}
+      {{ form.username }}
+      {{ form.password }}
+      {% if form.errors %}<div class="field-error">That passcode didn't work.</div>{% endif %}
+      <button type="submit" class="btn btn-primary btn-block">Unlock</button>
+    </form>
+    {% if request.GET.locked %}<div class="text-xs text-muted" style="margin-top:var(--space-4);">Locked after a period of inactivity.</div>{% endif %}
+    <div class="text-xs text-muted" style="margin-top:var(--space-5);">Private · Local</div>
+  </div>
+</div>
+{% endblock %}

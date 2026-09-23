@@ -1,0 +1,132 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}{% if domain %}Start {{ form.domain.value|default:domain|title }}{% else %}Start Focus{% endif %} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:460px;">
+  {% if not domain %}
+    <div class="page-header"><div class="page-title">What are you focusing on?</div></div>
+    <div class="stack-sm">
+      <a href="?domain=school" class="list-row"><div class="list-row-main"><div class="list-row-title">School</div></div></a>
+      <a href="?domain=project" class="list-row"><div class="list-row-main"><div class="list-row-title">Project</div></div></a>
+      <a href="?domain=business" class="list-row"><div class="list-row-main"><div class="list-row-title">Business</div></div></a>
+      <a href="?domain=writing" class="list-row"><div class="list-row-main"><div class="list-row-title">Writing</div></div></a>
+      <a href="?domain=personal" class="list-row"><div class="list-row-main"><div class="list-row-title">Personal</div></div></a>
+      <a href="?domain=other" class="list-row"><div class="list-row-main"><div class="list-row-title">Other</div></div></a>
+    </div>
+  {% else %}
+    {% if active_nav == "focus" %}{% include "layout/_location_bar.html" with back_url=request.path back_label="Change" %}{% endif %}
+    <div class="page-header"><div class="page-title">Start {{ form.domain.value|title }}</div></div>
+
+    {% if recent.courses or recent.projects %}
+      <div style="margin-bottom:var(--space-6);">
+        <div class="eyebrow" style="margin-bottom:var(--space-2);">Recent</div>
+        <div class="flex gap-2" style="flex-wrap:wrap;">
+          {% for course in recent.courses %}
+            <a href="?domain={{ domain }}&course={{ course.pk }}" class="btn btn-secondary btn-sm">{{ course.name }}</a>
+          {% endfor %}
+          {% for project in recent.projects %}
+            <a href="?domain={{ domain }}&project={{ project.pk }}" class="btn btn-secondary btn-sm">{{ project.name }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <form method="post" id="start-form">
+      {% csrf_token %}
+      {{ form.domain }}
+      <div class="stack">
+        <div id="fields-school" class="domain-fields">
+          <div class="field"><label class="field-label">Course</label>{{ form.course }}</div>
+          <div class="field">{{ form.topic }}</div>
+        </div>
+        <div id="fields-project" class="domain-fields">
+          <div class="field"><label class="field-label">Project</label>{{ form.project }}</div>
+        </div>
+        <div id="fields-writing" class="domain-fields">
+          <div class="field"><label class="field-label">Book</label>{{ form.book }}</div>
+        </div>
+        <div class="field"><label class="field-label">Task (optional)</label>{{ form.task }}</div>
+
+        <div class="field">
+          <label class="field-label">Mode</label>
+          <div class="tabs" id="mode-tabs" style="border-bottom:none; margin-bottom:0;">
+            <span class="tab mode-tab active" data-mode="stopwatch">Stopwatch</span>
+            <span class="tab mode-tab" data-mode="countdown">Countdown</span>
+            <span class="tab mode-tab" data-mode="pomodoro">Pomodoro</span>
+          </div>
+          {{ form.mode }}
+        </div>
+
+        <div id="countdown-options" class="field" style="display:none;">
+          <label class="field-label">Duration</label>
+          <div class="flex gap-2" style="flex-wrap:wrap;" id="countdown-presets">
+            <button type="button" class="btn btn-secondary btn-sm preset-btn" data-minutes="10">10m</button>
+            <button type="button" class="btn btn-secondary btn-sm preset-btn" data-minutes="15">15m</button>
+            <button type="button" class="btn btn-secondary btn-sm preset-btn" data-minutes="25">25m</button>
+            <button type="button" class="btn btn-secondary btn-sm preset-btn" data-minutes="30">30m</button>
+            <button type="button" class="btn btn-secondary btn-sm preset-btn" data-minutes="45">45m</button>
+            <button type="button" class="btn btn-secondary btn-sm preset-btn" data-minutes="60">60m</button>
+            <button type="button" class="btn btn-secondary btn-sm preset-btn" data-minutes="90">90m</button>
+          </div>
+          {{ form.countdown_minutes }}
+        </div>
+
+        <div id="pomodoro-options" style="display:none;">
+          <div class="field-row">
+            <div class="field"><label class="field-label">Focus</label>{{ form.pomodoro_focus_minutes }}</div>
+            <div class="field"><label class="field-label">Short break</label>{{ form.pomodoro_short_break_minutes }}</div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label class="field-label">Long break</label>{{ form.pomodoro_long_break_minutes }}</div>
+            <div class="field"><label class="field-label">Cycles</label>{{ form.pomodoro_cycles }}</div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:var(--space-6);">{% icon "play" size=15 %} Start</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if domain %}
+<script>
+(function () {
+  const domainInput = document.getElementById("id_domain");
+  domainInput.style.display = "none";
+  domainInput.value = "{{ domain }}";
+
+  const fieldsByDomain = { school: "fields-school", project: "fields-project", business: "fields-project", writing: "fields-writing" };
+  document.querySelectorAll(".domain-fields").forEach((el) => (el.style.display = "none"));
+  const shown = fieldsByDomain["{{ domain }}"];
+  if (shown) document.getElementById(shown).style.display = "";
+
+  const modeInput = document.getElementById("id_mode");
+  const tabs = document.querySelectorAll(".mode-tab");
+  const countdownOptions = document.getElementById("countdown-options");
+  const pomodoroOptions = document.getElementById("pomodoro-options");
+  // Hide only the native <select> — the custom tab UI below is what's
+  // meant to be visible and clickable. Regression: this used to hide both,
+  // leaving the whole Mode section blank with no way to pick a mode.
+  modeInput.style.display = "none";
+
+  function setMode(mode) {
+    modeInput.value = mode;
+    tabs.forEach((t) => t.classList.toggle("active", t.dataset.mode === mode));
+    countdownOptions.style.display = mode === "countdown" ? "" : "none";
+    pomodoroOptions.style.display = mode === "pomodoro" ? "" : "none";
+  }
+  tabs.forEach((t) => t.addEventListener("click", () => setMode(t.dataset.mode)));
+  setMode(modeInput.value || "stopwatch");
+
+  document.getElementById("countdown-presets").addEventListener("click", (e) => {
+    const btn = e.target.closest(".preset-btn");
+    if (!btn) return;
+    document.getElementById("id_countdown_minutes").value = btn.dataset.minutes;
+    document.querySelectorAll(".preset-btn").forEach((b) => b.classList.toggle("btn-primary", b === btn));
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Session — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:520px;">
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ session.course.name|default:"Focus session" }}</div>
+      <div class="page-subtitle">{{ session.get_mode_display }} · {{ session.get_status_display }}</div>
+    </div>
+  </div>
+
+  <div class="text-3xl weight-semibold mono" style="margin-bottom:var(--space-6);">{{ session.duration_seconds|duration_compact }}</div>
+
+  <div class="stack-sm" style="margin-bottom:var(--space-6);">
+    <div class="flex justify-between text-sm"><span class="text-muted">Started</span><span>{{ session.started_at|date:"M j, H:i" }}</span></div>
+    {% if session.ended_at %}<div class="flex justify-between text-sm"><span class="text-muted">Ended</span><span>{{ session.ended_at|date:"M j, H:i" }}</span></div>{% endif %}
+    {% if session.origin_device %}<div class="flex justify-between text-sm"><span class="text-muted">Device</span><span>{{ session.origin_device.name }}</span></div>{% endif %}
+    {% if session.task %}<div class="flex justify-between text-sm"><span class="text-muted">Task</span><span>{{ session.task.title }}</span></div>{% endif %}
+    {% if session.project %}<div class="flex justify-between text-sm"><span class="text-muted">Project</span><span>{{ session.project.name }}</span></div>{% endif %}
+  </div>
+
+  {% if session.correction_reason %}
+    <div class="badge badge-warning" style="margin-bottom:var(--space-4);">Corrected: {{ session.correction_reason }}</div>
+  {% endif %}
+
+  <div class="section">
+    <div class="eyebrow" style="margin-bottom:var(--space-2);">Event timeline</div>
+    <div class="list">
+      {% for event in events %}
+        <div class="list-row">
+          <div class="list-row-main">
+            <div class="list-row-title text-sm">{{ event.get_event_type_display }}</div>
+            {% if event.metadata %}<div class="list-row-meta">{{ event.metadata }}</div>{% endif %}
+          </div>
+          <span class="text-xs text-muted mono">{{ event.timestamp|date:"H:i:s" }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <details class="form-advanced">
+    <summary>Correct this session's duration</summary>
+    <form method="post" class="form-advanced-body">
+      {% csrf_token %}
+      <div class="field-row">
+        <div class="field"><label class="field-label">Hours</label>{{ correction_form.corrected_hours }}</div>
+        <div class="field"><label class="field-label">Minutes</label>{{ correction_form.corrected_minutes }}</div>
+      </div>
+      <div class="field"><label class="field-label">Reason</label>{{ correction_form.reason }}</div>
+      <button type="submit" class="btn btn-secondary btn-sm" style="align-self:flex-start;">Save Correction</button>
+    </form>
+  </details>
+</div>
+{% endblock %}

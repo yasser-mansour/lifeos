@@ -1,0 +1,20 @@
+{% load icons lifeos_extras %}
+{% if study_today_seconds %}
+  <div class="flex items-end gap-2" style="margin-bottom:6px;">
+    <span class="text-3xl weight-semibold mono">{{ study_today_seconds|duration_compact }}</span>
+    {% if study_goal_seconds %}<span class="text-secondary text-md">/ {{ study_goal_seconds|duration_compact }}</span>{% endif %}
+  </div>
+  {% if study_goal_seconds %}
+    <div class="progress-track" style="margin-bottom:var(--space-3);"><div class="progress-fill" style="width:{{ study_today_seconds|percent:study_goal_seconds }}%;"></div></div>
+  {% endif %}
+  {% if study_streak %}
+    <div class="flex items-center gap-1 text-sm text-secondary">{% icon "streak" size=14 %} {{ study_streak }}-day streak</div>
+  {% endif %}
+{% else %}
+  <div class="empty-state" style="padding:var(--space-6);">
+    <div class="empty-state-icon">{% icon "study" size=18 %}</div>
+    <div class="empty-state-title">No study sessions yet</div>
+    <div class="empty-state-body">Start your first focus session to see your progress here.</div>
+    <a href="{% url 'study:start' %}?domain=school" class="btn btn-primary btn-sm">Start Study</a>
+  </div>
+{% endif %}

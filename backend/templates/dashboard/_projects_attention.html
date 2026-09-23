@@ -1,0 +1,19 @@
+{% load icons %}
+{% if projects_attention %}
+  <div class="list">
+    {% for project in projects_attention %}
+      <a href="{{ project.get_absolute_url }}" class="list-row">
+        <div class="list-row-main">
+          <div class="list-row-title">{{ project.name }}</div>
+          <div class="list-row-meta">{{ project.reason }}</div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state" style="padding:var(--space-6);">
+    <div class="empty-state-icon">{% icon "projects" size=18 %}</div>
+    <div class="empty-state-title">Nothing needs attention</div>
+    <div class="empty-state-body">Projects with overdue tasks or stale activity will surface here.</div>
+  </div>
+{% endif %}

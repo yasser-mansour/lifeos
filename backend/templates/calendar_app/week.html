@@ -1,0 +1,21 @@
+{% extends "layout/app_shell.html" %}
+{% block title %}Week — LIFEOS{% endblock %}
+{% block content %}
+<div class="page page-wide">
+  <div class="page-header"><div class="page-title">This Week</div>
+    <div class="page-actions"><a href="{% url 'calendar_app:month' %}" class="btn btn-ghost">Month</a></div>
+  </div>
+  <div class="flex gap-4" style="align-items:flex-start;">
+    {% for day in days %}
+      <div class="flex-1 section" style="min-width:0;">
+        <div class="eyebrow" style="margin-bottom:var(--space-2);">{{ day.date|date:"D j" }}</div>
+        {% for event in day.events %}
+          <div class="text-sm" style="padding:4px 0; border-bottom:1px solid var(--border-subtle);">{{ event.title }}</div>
+        {% empty %}
+          <div class="text-xs text-muted">—</div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

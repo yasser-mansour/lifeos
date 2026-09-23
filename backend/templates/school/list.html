@@ -1,0 +1,58 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Courses — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Courses</div>
+      <div class="page-subtitle">{{ lifeos_profile.school_name|default:"Your courses" }}</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" data-open-overlay="new-course">{% icon "plus" size=14 %} Add Course</button>
+    </div>
+  </div>
+
+  {% if courses %}
+    <div class="list">
+      {% for course in courses %}
+        <a href="{{ course.get_absolute_url }}" class="list-row">
+          <span class="dot" style="width:10px;height:10px;border-radius:3px;background:{{ course.color }};"></span>
+          <div class="list-row-main">
+            <div class="list-row-title">{{ course.name }}</div>
+            <div class="list-row-meta">{{ course.teacher|default:"" }}</div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "book" size=18 %}</div>
+      <div class="empty-state-title">No courses yet</div>
+      <div class="empty-state-body">Add your courses to organize study sessions, topics and exams.</div>
+      <button class="btn btn-primary btn-sm" data-open-overlay="new-course">Add Course</button>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal-backdrop{% if show_new %} open{% endif %}" id="new-course">
+  <div class="modal">
+    <div class="modal-header">Add Course</div>
+    <form method="post" action="{% url 'school:course_create' %}">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ form.name }}</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Teacher</label>{{ form.teacher }}</div>
+          <div class="field" style="max-width:80px;"><label class="field-label">Color</label>{{ form.color }}</div>
+        </div>
+        <div class="field"><label class="field-label">Description</label>{{ form.description }}</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-course">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Course</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

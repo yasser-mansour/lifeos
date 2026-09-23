@@ -1,0 +1,53 @@
+{% load lifeos_extras icons %}
+{% if event.kind == 'transaction' %}
+  {% with txn=event.transaction %}
+    <a href="{% url 'finance:transaction_edit' txn.pk %}" class="list-row">
+      <div class="list-row-main">
+        <div class="list-row-title text-sm">{{ txn.description|default:txn.get_type_display }}</div>
+        <div class="list-row-meta">
+          {% if show_account %}{{ txn.account.name }} · {% endif %}{{ txn.date }}
+          {% if txn.category %}· {{ txn.category.name }}{% endif %}
+          {% if txn.fund %}· {{ txn.fund.name }}{% endif %}
+          {% if txn.project %}· {{ txn.project.name }}{% endif %}
+          {% if txn.counterparty %}· {{ txn.counterparty.name }}{% endif %}
+        </div>
+      </div>
+      <span class="mono text-sm weight-medium {% if txn.signed_amount > 0 %}text-success{% endif %}">{{ txn.signed_amount|money:txn.currency }}</span>
+    </a>
+  {% endwith %}
+{% else %}
+  {% with transfer=event.transfer %}
+    <div class="list-row">
+      <div class="list-row-main">
+        <div class="list-row-title text-sm"><span class="badge badge-neutral">{{ transfer.transfer_kind|capfirst }} transfer</span> {{ transfer.description }}</div>
+        <div class="list-row-meta">
+          {% if transfer.from_account_id != transfer.to_account_id %}{{ transfer.from_account.name }} → {{ transfer.to_account.name }}{% else %}{{ transfer.from_account.name }}{% endif %}
+          {% if transfer.from_fund or transfer.to_fund %}· {{ transfer.from_fund.name|default:"Unallocated" }} → {{ transfer.to_fund.name|default:"Unallocated" }}{% endif %}
+          · {{ transfer.date }}
+        </div>
+      </div>
+      <span class="mono text-sm">{% if event.kind == 'transfer_out' %}-{% elif event.kind == 'transfer_in' %}+{% endif %}{{ transfer.amount|money:transfer.currency }}</span>
+      <a href="{% url 'finance:transfer_edit' transfer.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-ghost btn-sm text-muted" aria-label="Edit transfer">{% icon "edit" size=12 %}</a>
+      <button type="button" class="btn btn-ghost btn-sm text-muted" data-open-overlay="delete-transfer-{{ transfer.pk }}" aria-label="Delete transfer">{% icon "trash" size=12 %}</button>
+    </div>
+    <div class="modal-backdrop" id="delete-transfer-{{ transfer.pk }}">
+      <div class="modal">
+        <div class="modal-header">Delete transfer?</div>
+        <div class="modal-body stack-sm">
+          <div class="text-sm">{{ transfer.from_account.name }} → {{ transfer.to_account.name }}</div>
+          <div class="text-lg weight-semibold mono">{{ transfer.amount|money:transfer.currency }}</div>
+          <div class="text-sm text-muted">{{ transfer.date }}</div>
+          <div class="text-sm text-muted" style="margin-top:var(--space-2);">Both sides of this transfer will be removed together. This can be recovered by an administrator if needed, but won't reappear in LIFEOS.</div>
+        </div>
+        <form method="post" action="{% url 'finance:transfer_delete' transfer.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-close-overlay="delete-transfer-{{ transfer.pk }}">Cancel</button>
+            <button type="submit" class="btn btn-danger">Delete</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endwith %}
+{% endif %}

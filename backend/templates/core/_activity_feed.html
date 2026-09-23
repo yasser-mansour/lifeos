@@ -1,0 +1,16 @@
+{% if not events %}
+  <div class="empty-state">
+    <div class="empty-state-body">No activity yet.</div>
+  </div>
+{% else %}
+  <div class="list">
+    {% for event in events %}
+      <div class="list-row">
+        <div class="list-row-main">
+          <div class="list-row-title">{{ event.verb }}</div>
+        </div>
+        <div class="list-row-trail text-xs text-muted">{{ event.created_at|timesince }} ago</div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

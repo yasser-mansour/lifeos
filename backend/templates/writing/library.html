@@ -1,0 +1,49 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Writing — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div><div class="page-title">Writing</div></div>
+    <div class="page-actions"><button class="btn btn-primary" data-open-overlay="new-book">{% icon "plus" size=14 %} New Book</button></div>
+  </div>
+
+  {% if books %}
+    <div class="list">
+      {% for book in books %}
+        <a href="{{ book.get_absolute_url }}" class="list-row">
+          <div class="list-row-main">
+            <div class="list-row-title">{{ book.title }}</div>
+            <div class="list-row-meta">{{ book.get_status_display }} · {{ book.chapters.count }} chapters · {{ book.total_word_count }} words</div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "writing" size=18 %}</div>
+      <div class="empty-state-title">Nothing here yet</div>
+      <div class="empty-state-body">Books, chapters, drafts and ideas — your long-form writing lives here.</div>
+      <button class="btn btn-primary btn-sm" data-open-overlay="new-book">New Book</button>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal-backdrop{% if show_new %} open{% endif %}" id="new-book">
+  <div class="modal">
+    <div class="modal-header">New Book</div>
+    <form method="post" action="{% url 'writing:book_create' %}">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Title</label>{{ form.title }}</div>
+        <div class="field"><label class="field-label">Status</label>{{ form.status }}</div>
+        <div class="field"><label class="field-label">Description</label>{{ form.description }}</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-book">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

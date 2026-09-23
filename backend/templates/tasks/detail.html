@@ -1,0 +1,7 @@
+{% extends "layout/app_shell.html" %}
+{% block title %}{{ task.title }} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:560px;">
+  {% include "tasks/_detail_panel.html" %}
+</div>
+{% endblock %}

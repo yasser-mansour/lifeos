@@ -1,0 +1,156 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  safety-and-tests:
+    name: Safety scan + backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repository safety scan
+        run: python3 scripts/check_repo_safety.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r backend/requirements.txt
+      - working-directory: backend
+        run: python manage.py check
+      - working-directory: backend
+        run: python manage.py test
+
+  macos-build:
+    name: macOS build
+    runs-on: macos-latest
+    needs: safety-and-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set up venv
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install -r backend/requirements.txt
+          .venv/bin/pip install pyinstaller pillow
+      - name: Determine version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Build .app + .dmg
+        run: packaging/macos/build_release.sh "${{ steps.version.outputs.version }}"
+      - name: Verify the app bundle structure
+        run: |
+          test -f "packaging/macos/dist/LIFEOS.app/Contents/MacOS/LIFEOSLauncher"
+          test -x "packaging/macos/dist/LIFEOS.app/Contents/Resources/lifeos-backend/lifeos-backend"
+          test -f "packaging/macos/dist/LIFEOS-${{ steps.version.outputs.version }}.dmg"
+      - name: Smoke test the bundled backend (isolated app-data dir, isolated port)
+        run: |
+          export LIFEOS_APP_DATA_DIR="$RUNNER_TEMP/lifeos-ci-appdata"
+          export LIFEOS_PORT=8799
+          export LIFEOS_DEBUG=false
+          "packaging/macos/dist/LIFEOS.app/Contents/Resources/lifeos-backend/lifeos-backend" &
+          BACKEND_PID=$!
+          for i in $(seq 1 20); do
+            if curl -sf "http://127.0.0.1:8799/api/health/" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -sf "http://127.0.0.1:8799/api/health/"
+          curl -sf -o /dev/null "http://127.0.0.1:8799/first-run/"
+          kill $BACKEND_PID
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: |
+            packaging/macos/dist/LIFEOS-*.dmg
+            packaging/macos/dist/SHA256SUMS.txt
+
+  windows-build:
+    name: Windows build
+    runs-on: windows-latest
+    needs: safety-and-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set up venv
+        run: |
+          python -m venv .venv
+          .venv\Scripts\pip.exe install -r backend\requirements-windows.txt
+          .venv\Scripts\pip.exe install pyinstaller
+      - name: Determine version from tag
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Build installer
+        shell: pwsh
+        run: packaging/windows/build_release.ps1 -Version "${{ steps.version.outputs.version }}"
+      - name: Verify installer exists
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "packaging/windows/dist/LIFEOS-Setup-${{ steps.version.outputs.version }}.exe")) {
+            throw "Installer not found"
+          }
+      - name: Smoke test the packaged executable starts and answers health
+        shell: pwsh
+        run: |
+          $env:LIFEOS_APP_DATA_DIR = "$env:RUNNER_TEMP\lifeos-ci-appdata"
+          $env:LIFEOS_PORT = "8799"
+          $proc = Start-Process -FilePath "packaging/windows/dist/LIFEOS.exe" -PassThru
+          $healthy = $false
+          for ($i = 0; $i -lt 20; $i++) {
+            try {
+              $r = Invoke-WebRequest -Uri "http://127.0.0.1:8799/api/health/" -UseBasicParsing -TimeoutSec 2
+              if ($r.StatusCode -eq 200) { $healthy = $true; break }
+            } catch {}
+            Start-Sleep -Seconds 1
+          }
+          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+          if (-not $healthy) { throw "Backend never became healthy" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            packaging/windows/dist/LIFEOS-Setup-*.exe
+            packaging/windows/dist/SHA256SUMS.txt
+
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: [macos-build, windows-build]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-dmg
+          path: release-assets
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: release-assets
+      - name: Merge checksum files
+        run: cat release-assets/SHA256SUMS.txt >> release-assets/ALL-SHA256SUMS.txt || true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/LIFEOS-*.dmg
+            release-assets/LIFEOS-Setup-*.exe
+            release-assets/ALL-SHA256SUMS.txt
+          body: |
+            ## LIFEOS ${{ github.ref_name }}
+
+            Download the installer for your OS below — you don't need to
+            download the source code.
+
+            - **macOS**: `LIFEOS-*.dmg`
+            - **Windows**: `LIFEOS-Setup-*.exe`
+
+            Your data is stored locally on your computer. There is no
+            LIFEOS cloud account and no server this talks to.
+
+            These builds are unsigned (no Apple Developer ID or Windows
+            code-signing certificate yet) — see the README for exactly
+            what that means on first launch.
+          draft: true

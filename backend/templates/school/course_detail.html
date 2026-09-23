@@ -1,0 +1,262 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}{{ course.name }} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="dot" style="width:10px;height:10px;border-radius:3px;background:{{ course.color }};"></span>
+        <div class="page-title">{{ course.name }}</div>
+      </div>
+      <div class="page-subtitle">{{ course.teacher|default:"" }}</div>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'tasks:list' %}?course={{ course.pk }}&new=1" class="btn btn-secondary">{% icon "plus" size=14 %} Add Task</a>
+      <a href="{% url 'study:start' %}?domain=school&course={{ course.pk }}" class="btn btn-primary">{% icon "play" size=14 %} Start Focus</a>
+    </div>
+  </div>
+
+  <details class="form-advanced" style="margin-bottom:var(--space-6);">
+    <summary>Edit course</summary>
+    <form method="post" action="{% url 'school:course_update' course.pk %}" class="stack form-advanced-body">
+      {% csrf_token %}
+      <div class="field-row">
+        <div class="field"><label class="field-label">Name</label>{{ edit_form.name }}</div>
+        <div class="field"><label class="field-label">Teacher</label>{{ edit_form.teacher }}</div>
+      </div>
+      <div class="field"><label class="field-label">Color</label>{{ edit_form.color }}</div>
+      <div class="field"><label class="field-label">Description</label>{{ edit_form.description }}</div>
+      <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start;">Save Changes</button>
+    </form>
+  </details>
+
+  <div class="flex gap-6" style="margin-bottom:var(--space-8);">
+    <div>
+      <div class="eyebrow">Total study time</div>
+      <div class="text-2xl weight-semibold mono">{{ stats.total_seconds|duration_compact }}</div>
+    </div>
+    <div class="divider-v"></div>
+    <div>
+      <div class="eyebrow">This week</div>
+      <div class="text-2xl weight-semibold mono">{{ stats.week_seconds|duration_compact }}</div>
+    </div>
+  </div>
+
+  <div class="flex gap-6" style="align-items:flex-start;">
+    <div class="flex-1 section" style="min-width:0;">
+      <div class="section-header">
+        <div class="eyebrow">Topics</div>
+        <button class="text-xs text-muted" data-open-overlay="new-topic">+ Add</button>
+      </div>
+      {% if topics %}
+        <div class="list">
+          {% for topic in topics %}
+            <div class="list-row">
+              <a href="{% url 'study:start' %}?domain=school&course={{ course.pk }}&topic={{ topic.pk }}" class="list-row-main"><div class="list-row-title text-sm">{{ topic.name }}</div></a>
+              <button type="button" class="btn btn-ghost btn-sm" data-open-overlay="edit-topic-{{ topic.pk }}">Edit</button>
+            </div>
+            <div class="modal-backdrop" id="edit-topic-{{ topic.pk }}">
+              <div class="modal">
+                <div class="modal-header">Edit Topic</div>
+                <form method="post" action="{% url 'school:topic_update' course.pk topic.pk %}">
+                  {% csrf_token %}
+                  <div class="modal-body stack">
+                    <div class="field"><label class="field-label">Name</label><input type="text" name="name" value="{{ topic.name }}" class="input" required></div>
+                    <div class="field"><label class="field-label">Order</label><input type="number" name="order" value="{{ topic.order }}" class="input"></div>
+                  </div>
+                  <div class="modal-footer flex justify-between">
+                    <button type="button" class="btn btn-ghost" data-close-overlay="edit-topic-{{ topic.pk }}">Cancel</button>
+                    <div class="flex gap-2">
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </div>
+                </form>
+                <form method="post" action="{% url 'school:topic_delete' course.pk topic.pk %}" onsubmit="return confirm('Remove topic {{ topic.name }}?');" style="padding:0 var(--space-5) var(--space-5);">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-ghost btn-sm text-danger">{% icon "trash" size=13 %} Delete topic</button>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-sm text-muted">No topics yet.</div>
+      {% endif %}
+    </div>
+
+    <div class="flex-1 section" style="min-width:0;">
+      <div class="section-header">
+        <div class="eyebrow">Upcoming exams</div>
+        <button class="text-xs text-muted" data-open-overlay="new-exam">+ Add</button>
+      </div>
+      {% if exams %}
+        <div class="list">
+          {% for exam in exams %}
+            <div class="list-row">
+              <a href="#" data-open-overlay="edit-exam-{{ exam.pk }}" class="list-row-main">
+                <div class="list-row-title text-sm">{{ exam.description|default:"Exam" }}</div>
+                <div class="list-row-meta">{{ exam.date }}{% if exam.time %} · {{ exam.time }}{% endif %}</div>
+              </a>
+              <span class="badge {% if exam.importance == 'high' %}badge-danger{% elif exam.importance == 'medium' %}badge-warning{% else %}badge-neutral{% endif %}">{{ exam.get_importance_display }}</span>
+            </div>
+            <div class="modal-backdrop" id="edit-exam-{{ exam.pk }}">
+              <div class="modal">
+                <div class="modal-header">Edit Exam</div>
+                <form method="post" action="{% url 'school:exam_update' exam.pk %}">
+                  {% csrf_token %}
+                  <div class="modal-body stack">
+                    <div class="field"><label class="field-label">Course</label>
+                      <select name="course" class="select" required>
+                        {% for c in all_courses %}<option value="{{ c.pk }}" {% if c.pk == exam.course_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+                      </select>
+                    </div>
+                    <div class="field-row">
+                      <div class="field"><label class="field-label">Date</label><input type="date" name="date" value="{{ exam.date|date:'Y-m-d' }}" class="input" required></div>
+                      <div class="field"><label class="field-label">Time</label><input type="time" name="time" value="{{ exam.time|time:'H:i' }}" class="input"></div>
+                    </div>
+                    <div class="field"><label class="field-label">Description</label><input type="text" name="description" value="{{ exam.description }}" class="input"></div>
+                    <div class="field"><label class="field-label">Location</label><input type="text" name="location" value="{{ exam.location }}" class="input"></div>
+                    <div class="field"><label class="field-label">Importance</label>
+                      <select name="importance" class="select">
+                        {% for value, label in importance_choices %}<option value="{{ value }}" {% if value == exam.importance %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                      </select>
+                    </div>
+                    <div class="field"><label class="field-label">Notes</label><textarea name="notes" class="textarea">{{ exam.notes }}</textarea></div>
+                  </div>
+                  <div class="modal-footer flex justify-between">
+                    <button type="button" class="btn btn-ghost" data-close-overlay="edit-exam-{{ exam.pk }}">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                  </div>
+                </form>
+                <form method="post" action="{% url 'school:exam_delete' exam.pk %}" onsubmit="return confirm('Delete this exam?');" style="padding:0 var(--space-5) var(--space-5);">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-ghost btn-sm text-danger">{% icon "trash" size=13 %} Delete exam</button>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-sm text-muted">No upcoming exams.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="new-exam">
+    <div class="modal">
+      <div class="modal-header">Add Exam</div>
+      <form method="post" action="{% url 'school:exam_create' %}">
+        {% csrf_token %}
+        <input type="hidden" name="course" value="{{ course.pk }}">
+        <div class="modal-body stack">
+          <div class="field-row">
+            <div class="field"><label class="field-label">Date</label>{{ exam_form.date }}</div>
+            <div class="field"><label class="field-label">Time</label>{{ exam_form.time }}</div>
+          </div>
+          <div class="field"><label class="field-label">Description</label>{{ exam_form.description }}</div>
+          <div class="field"><label class="field-label">Location</label>{{ exam_form.location }}</div>
+          <div class="field"><label class="field-label">Importance</label>{{ exam_form.importance }}</div>
+          <div class="field"><label class="field-label">Notes</label>{{ exam_form.notes }}</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close-overlay="new-exam">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Exam</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="eyebrow">Goals</div>
+      <a href="{% url 'goals:list' %}?course={{ course.pk }}&new=1" class="text-xs text-muted">+ Add</a>
+    </div>
+    {% if goals %}
+      <div class="list">
+        {% for goal in goals %}
+          <a href="{{ goal.get_absolute_url }}" class="list-row">
+            <div class="list-row-main">
+              <div class="list-row-title text-sm">{{ goal.title }}</div>
+              <div class="list-row-meta">{% if goal.deadline %}Due {{ goal.deadline }}{% endif %}</div>
+            </div>
+            {% if goal.target_value %}<span class="mono text-sm">{{ goal.effective_current_value }} / {{ goal.target_value }} {{ goal.unit }}</span>{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-sm text-muted">No goals linked to this course.</div>
+    {% endif %}
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="eyebrow">Notes</div>
+      <a href="{% url 'notes:new' %}?course={{ course.pk }}" class="text-xs text-muted">+ New Note</a>
+    </div>
+    {% if course.linked_notes.all %}
+      <div class="list">
+        {% for note in course.linked_notes.all %}
+          <a href="{{ note.get_absolute_url }}" class="list-row"><div class="list-row-title text-sm">{{ note.title|default:"Untitled note" }}</div></a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-sm text-muted">No notes yet.</div>
+    {% endif %}
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="eyebrow">Upcoming events</div>
+      <a href="{% url 'calendar_app:event_new' %}?course={{ course.pk }}" class="text-xs text-muted">+ Schedule</a>
+    </div>
+    {% if upcoming_events %}
+      <div class="list">
+        {% for event in upcoming_events %}
+          <a href="{% url 'calendar_app:event_edit' event.pk %}" class="list-row">
+            <div class="list-row-title text-sm">{{ event.title }}</div>
+            <div class="list-row-meta">{{ event.start|date:"M j, H:i" }}</div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-sm text-muted">Nothing scheduled.</div>
+    {% endif %}
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="eyebrow">Recent sessions</div><a href="{% url 'study:history' %}?course={{ course.pk }}" class="text-xs text-muted">View all</a></div>
+    {% if stats.recent_sessions %}
+      <div class="list">
+        {% for session in stats.recent_sessions %}
+          <div class="list-row">
+            <div class="list-row-main">
+              <div class="list-row-title text-sm">{{ session.topic.name|default:"General" }}</div>
+              <div class="list-row-meta">{{ session.started_at|date:"M j" }}</div>
+            </div>
+            <span class="mono text-sm">{{ session.duration_seconds|duration_compact }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-sm text-muted">No sessions yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal-backdrop" id="new-topic">
+  <div class="modal">
+    <div class="modal-header">Add Topic</div>
+    <form method="post" action="{% url 'school:topic_create' course.pk %}">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ topic_form.name }}</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-topic">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Topic</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

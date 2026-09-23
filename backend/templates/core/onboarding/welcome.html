@@ -1,0 +1,21 @@
+{% extends "layout/base.html" %}
+{% block title %}Welcome to LIFEOS{% endblock %}
+{% block body %}
+<div class="flex items-center justify-center" style="min-height:100vh; background:var(--bg-secondary);">
+  <div class="surface" style="width:420px; padding:var(--space-8); text-align:center;">
+    <div class="flex items-center justify-center gap-2" style="margin-bottom:var(--space-6);">
+      <span class="sidebar-mark" style="width:36px;height:36px;border-radius:11px;"></span>
+    </div>
+
+    <h1 class="text-xl weight-semibold" style="margin-bottom:var(--space-2);">LIFEOS</h1>
+    <p class="text-secondary text-sm" style="margin-bottom:var(--space-1);">Your private operating system for life.</p>
+    <p class="text-secondary text-sm" style="margin-bottom:var(--space-6);">Plan, focus, manage and understand the things that matter to you.</p>
+    <p class="text-muted text-sm" style="margin-bottom:var(--space-6);">Your data stays on this computer.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Get Started</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

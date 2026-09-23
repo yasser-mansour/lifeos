@@ -1,0 +1,42 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Needs Classification — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  {% url 'focus:overview' as focus_overview_url %}
+  {% include "layout/_location_bar.html" with back_url=focus_overview_url back_label="Focus" %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Needs classification</div>
+      <div class="page-subtitle">Older sessions with nothing to classify them by automatically. Assign each one by hand — nothing is guessed for you.</div>
+    </div>
+  </div>
+
+  {% if sessions %}
+    <div class="list">
+      {% for session in sessions %}
+        <div class="list-row" style="align-items:center;">
+          <div class="list-row-main">
+            <div class="list-row-title text-sm">{{ session.started_at|date:"M j, Y · H:i" }}</div>
+            <div class="list-row-meta">{{ session.duration_seconds|duration_compact }} · {{ session.get_mode_display }}{% if session.notes %} · {{ session.notes|truncatechars:60 }}{% endif %}</div>
+          </div>
+          <form method="post" class="flex gap-1">
+            {% csrf_token %}
+            <input type="hidden" name="session_id" value="{{ session.pk }}">
+            <select name="domain" class="select" style="width:auto;" onchange="this.form.requestSubmit()">
+              <option value="">Classify as…</option>
+              {% for value, label in domain_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+            </select>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "check" size=18 %}</div>
+      <div class="empty-state-title">Nothing to classify</div>
+      <div class="empty-state-body">Every session has a clear domain.</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

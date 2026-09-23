@@ -1,0 +1,85 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}{{ account.name }} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  {% include "layout/_location_bar.html" %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ account.name }}</div>
+      <div class="page-subtitle">{{ account.get_account_type_display }} · {{ account.get_context_display }}</div>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'finance:transfer_new' %}" class="btn btn-secondary">Transfer</a>
+      <a href="{% url 'finance:transaction_new' %}?account={{ account.pk }}" class="btn btn-primary">{% icon "plus" size=14 %} Add Transaction</a>
+    </div>
+  </div>
+
+  <div class="text-4xl weight-semibold mono" style="margin-bottom:var(--space-2);">{{ balance|money:account.currency }}</div>
+
+  {% if fund_breakdown|length > 1 %}
+  <div class="stack-xs" style="margin-bottom:var(--space-6);" title="What this account's balance is for, not just where it sits.">
+    {% for fund, amount in fund_breakdown %}
+      <div class="flex justify-between text-sm">
+        {% if fund %}<a href="{% url 'finance:fund_detail' fund.pk %}" class="text-secondary">{{ fund.name }}</a>{% else %}<span class="text-muted">Unallocated</span>{% endif %}
+        <span class="mono">{{ amount|money:account.currency }}</span>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <details class="form-advanced" style="margin-bottom:var(--space-4);">
+    <summary>Edit account</summary>
+    <form method="post" action="{% url 'finance:account_update' account.pk %}" class="stack form-advanced-body">
+      {% csrf_token %}
+      <div class="field-row">
+        <div class="field"><label class="field-label">Name</label>{{ edit_form.name }}</div>
+        <div class="field"><label class="field-label">Institution</label>{{ edit_form.institution }}</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Type</label>{{ edit_form.account_type }}</div>
+        <div class="field"><label class="field-label">Context</label>{{ edit_form.context }}</div>
+        <div class="field"><label class="field-label">Currency</label>{{ edit_form.currency }}</div>
+      </div>
+      <div class="field"><label class="field-label">Opening balance</label>{{ edit_form.opening_balance }}</div>
+      <div class="field"><label class="field-label">Notes</label>{{ edit_form.notes }}</div>
+      <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start;">Save Changes</button>
+    </form>
+  </details>
+
+  <button type="button" class="btn btn-ghost btn-sm text-danger" data-open-overlay="archive-account" style="margin-bottom:var(--space-8);">{% icon "trash" size=13 %} Archive Account</button>
+
+  <div class="section-header"><div class="eyebrow">Activity</div></div>
+  {% if events %}
+    <div class="list">
+      {% for event in events %}
+        {% include "finance/_activity_row.html" with event=event %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "finance" size=18 %}</div>
+      <div class="empty-state-title">No activity yet</div>
+      <div class="empty-state-body">Everything you record against {{ account.name }} shows up here.</div>
+      <a href="{% url 'finance:transaction_new' %}?account={{ account.pk }}" class="btn btn-primary btn-sm">Add Transaction</a>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal-backdrop" id="archive-account">
+  <div class="modal">
+    <div class="modal-header">Archive {{ account.name }}?</div>
+    <div class="modal-body stack-sm">
+      <div class="text-sm">The account will disappear from active finance views.</div>
+      <div class="text-sm text-muted">Its {{ account.transactions.count }} transaction(s) and history are preserved, not deleted — nothing about your records is lost.</div>
+    </div>
+    <form method="post" action="{% url 'finance:account_delete' account.pk %}">
+      {% csrf_token %}
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="archive-account">Cancel</button>
+        <button type="submit" class="btn btn-danger">Archive</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

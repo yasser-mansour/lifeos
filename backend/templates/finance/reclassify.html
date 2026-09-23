@@ -1,0 +1,40 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Review Finance Structure — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  {% include "layout/_location_bar.html" %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Review Finance Structure</div>
+      <div class="page-subtitle">Some of your accounts might actually describe a <em>purpose</em> ("Living", "Family Support") rather than a physical bank or wallet. Nothing changes here unless you ask for it.</div>
+    </div>
+  </div>
+
+  <div class="list">
+    {% for row in rows %}
+      <div class="list-row" style="align-items:flex-start;">
+        <div class="list-row-main">
+          <div class="list-row-title">{{ row.account.name }}</div>
+          <div class="list-row-meta">
+            {{ row.account.get_account_type_display }} · {{ row.account.get_context_display }} · {{ row.transaction_count }} transaction{{ row.transaction_count|pluralize }}
+            {% if row.sample_descriptions %} · e.g. "{{ row.sample_descriptions|join:'", "' }}"{% endif %}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="mono text-sm weight-medium" style="margin-bottom:var(--space-2);">{{ row.balance|money:row.account.currency }}</div>
+          {% if row.matching_fund %}
+            <a href="{% url 'finance:fund_detail' row.matching_fund.pk %}" class="btn btn-secondary btn-sm">Already mapped → {{ row.matching_fund.name }}</a>
+          {% else %}
+            <form method="post" action="{% url 'finance:reclassify_map_to_fund' row.account.pk %}" onsubmit="return confirm('Create a Fund named \'{{ row.account.name }}\' and tag this account\'s unclassified transactions with it? The account itself is kept exactly as-is.');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary btn-sm">Map to Fund{% if row.matching_project %} ({{ row.matching_project.name }} project){% endif %}</button>
+            </form>
+          {% endif %}
+          <div class="text-xs text-muted" style="margin-top:var(--space-1);">Keeping it as a plain Account needs no action.</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

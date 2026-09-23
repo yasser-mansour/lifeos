@@ -1,0 +1,27 @@
+{% load icons %}
+{% if today_items %}
+  <div class="list">
+    {% for item in today_items %}
+      <div class="list-row">
+        <span class="timeline-time">{{ item.time|default:"Anytime" }}</span>
+        {% if item.url %}
+          <a href="{{ item.url }}" class="list-row-main">
+            <div class="list-row-title">{{ item.title }}</div>
+            <div class="list-row-meta">{{ item.meta }}</div>
+          </a>
+        {% else %}
+          <div class="list-row-main">
+            <div class="list-row-title">{{ item.title }}</div>
+            <div class="list-row-meta">{{ item.meta }}</div>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state" style="padding:var(--space-8) var(--space-6);">
+    <div class="empty-state-icon">{% icon "calendar" size=18 %}</div>
+    <div class="empty-state-title">Nothing scheduled today</div>
+    <div class="empty-state-body">Tasks, events and deadlines will show up here as you add them.</div>
+  </div>
+{% endif %}

@@ -1,0 +1,155 @@
+{% extends "layout/app_shell.html" %}
+{% load lifeos_extras %}
+{% block title %}Settings — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Settings</div>
+    </div>
+  </div>
+
+  <div class="flex gap-6" style="align-items:flex-start;">
+    <div class="flex-col gap-1" style="width:160px; flex-shrink:0;">
+      <a href="{% url 'core:settings_section' 'general' %}" class="sidebar-item {% if section == 'general' %}active{% endif %}">General</a>
+      <a href="{% url 'core:settings_section' 'appearance' %}" class="sidebar-item {% if section == 'appearance' %}active{% endif %}">Appearance</a>
+      <a href="{% url 'devices:list' %}" class="sidebar-item">Devices</a>
+      <a href="{% url 'devices:conflicts' %}" class="sidebar-item">Sync{% if pending_conflict_count %} <span class="badge badge-danger">{{ pending_conflict_count }}</span>{% endif %}</a>
+      <a href="{% url 'core:settings_section' 'security' %}" class="sidebar-item {% if section == 'security' %}active{% endif %}">Security</a>
+      <a href="{% url 'core:settings_section' 'backup' %}" class="sidebar-item {% if section == 'backup' %}active{% endif %}">Backup</a>
+      <a href="{% url 'core:settings_section' 'export' %}" class="sidebar-item {% if section == 'export' %}active{% endif %}">Export</a>
+      <a href="{% url 'core:settings_section' 'about' %}" class="sidebar-item {% if section == 'about' %}active{% endif %}">About</a>
+    </div>
+
+    <div class="flex-1" style="max-width:520px;">
+      {% if section == 'backup' %}
+        <div class="stack">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-md weight-medium">Last backup</div>
+              <div class="text-sm text-muted">{% if backups %}{{ backups.0.created_at|timesince }} ago{% else %}Never{% endif %}</div>
+            </div>
+            <form method="post" action="{% url 'core:backup_create' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary">Create Backup</button>
+            </form>
+          </div>
+          <div class="divider"></div>
+          {% if backups %}
+            <div class="list">
+              {% for backup in backups %}
+                <div class="list-row">
+                  <div class="list-row-main">
+                    <div class="list-row-title text-sm mono">{{ backup.filename }}</div>
+                    <div class="list-row-meta">{{ backup.created_at|date:"M j, Y H:i" }} · {{ backup.size_mb }} MB</div>
+                  </div>
+                  <form method="post" action="{% url 'core:backup_restore' backup.filename %}" onsubmit="return confirm('Restore from {{ backup.filename }}? Your current data will be safety-backed-up first.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary btn-sm">Restore</button>
+                  </form>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-sm text-muted">No backups yet.</div>
+          {% endif %}
+        </div>
+      {% elif section == 'export' %}
+        <div class="stack">
+          <p class="text-sm text-secondary">Your data, in formats you can open elsewhere.</p>
+          <div class="list">
+            {% for dataset in datasets %}
+              <div class="list-row">
+                <div class="list-row-main"><div class="list-row-title text-sm">{{ dataset_labels|get_item:dataset }}</div></div>
+                <div class="flex gap-2">
+                  <a href="{% url 'core:export_download' dataset 'json' %}" class="btn btn-secondary btn-sm">JSON</a>
+                  <a href="{% url 'core:export_download' dataset 'csv' %}" class="btn btn-secondary btn-sm">CSV</a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% elif section == 'security' %}
+        <div class="stack-lg">
+          <div class="stack">
+            <div class="text-md weight-medium">Change passcode</div>
+            <form method="post" action="{% url 'core:passcode_change' %}" class="stack">
+              {% csrf_token %}
+              <div class="field">
+                <label class="field-label">Current passcode</label>
+                {{ passcode_form.current_password }}
+                {% if passcode_form.current_password.errors %}<div class="field-error">{{ passcode_form.current_password.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label class="field-label">New passcode</label>
+                  {{ passcode_form.new_password }}
+                </div>
+                <div class="field">
+                  <label class="field-label">Confirm new passcode</label>
+                  {{ passcode_form.new_password_confirm }}
+                  {% if passcode_form.new_password_confirm.errors %}<div class="field-error">{{ passcode_form.new_password_confirm.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Change Passcode</button>
+            </form>
+          </div>
+          <div class="divider"></div>
+          <div class="stack">
+            <div class="text-md weight-medium">Auto-lock</div>
+            <p class="text-sm text-secondary" style="margin:0;">LIFEOS locks itself after this much inactivity, and always locks when the app is closed or quit.</p>
+            <form method="post" action="{% url 'core:settings_section' 'security' %}" class="flex items-end gap-3">
+              {% csrf_token %}
+              <div class="field" style="flex:1; max-width:240px;">
+                {{ autolock_form.auto_lock_minutes }}
+              </div>
+              <button type="submit" class="btn btn-secondary">Save</button>
+            </form>
+          </div>
+          <div class="divider"></div>
+          <div class="stack">
+            <div class="text-md weight-medium">Session</div>
+            <form method="post" action="{% url 'core:logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary">Log Out</button>
+            </form>
+          </div>
+        </div>
+      {% elif section == 'appearance' %}
+        <form method="post" class="stack">
+          {% csrf_token %}
+          <div class="field">
+            <label class="field-label">Theme</label>
+            {{ appearance_form.theme }}
+            <div class="field-hint">System follows your Mac's appearance automatically.</div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Save</button>
+        </form>
+      {% elif section == 'about' %}
+        <div class="stack">
+          <div><div class="text-secondary text-sm">Version</div><div class="text-md weight-medium">{{ lifeos_version }}</div></div>
+          <div><div class="text-secondary text-sm">Database</div><div class="text-md weight-medium mono">SQLite, local-only</div></div>
+          <div><div class="text-secondary text-sm">Owner</div><div class="text-md weight-medium">{{ profile.display_name }}</div></div>
+        </div>
+      {% else %}
+        <form method="post" class="stack">
+          {% csrf_token %}
+          <div class="field">
+            <label class="field-label">Display name</label>
+            {{ general_form.display_name }}
+          </div>
+          <div class="field">
+            <label class="field-label">Default currency</label>
+            {{ general_form.default_currency }}
+          </div>
+          <div class="field">
+            <label class="field-label">School</label>
+            {{ general_form.school_name }}
+          </div>
+          <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Save</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

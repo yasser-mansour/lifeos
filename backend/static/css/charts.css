@@ -1,0 +1,51 @@
+.chart { width: 100%; }
+.chart text { fill: var(--text-muted); font-family: var(--font-sans); font-size: 10px; }
+.chart .chart-grid-line { stroke: var(--chart-grid); stroke-width: 1; }
+.chart .chart-axis-line { stroke: var(--border-subtle); stroke-width: 1; }
+.chart .chart-bar { fill: var(--chart-1); transition: opacity var(--transition-fast); }
+.chart .chart-bar:hover { opacity: 0.78; }
+.chart .chart-bar-muted { fill: var(--surface-secondary); }
+.chart .chart-line { fill: none; stroke: var(--chart-1); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chart .chart-area { fill: var(--accent-soft); }
+.chart .chart-dot { fill: var(--surface-overlay); stroke: var(--chart-1); stroke-width: 2; }
+
+.chart-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  z-index: 5;
+}
+.chart-tooltip.visible { opacity: 1; }
+
+/* Heatmap */
+.heatmap { display: inline-flex; flex-direction: column; gap: 3px; }
+.heatmap-row { display: flex; gap: 3px; }
+.heatmap-cell {
+  width: 11px; height: 11px;
+  border-radius: 3px;
+  background: var(--surface-secondary);
+}
+.heatmap-cell[data-level="1"] { background: var(--accent-soft); }
+.heatmap-cell[data-level="2"] { background: color-mix(in srgb, var(--accent) 45%, var(--surface-secondary)); }
+.heatmap-cell[data-level="3"] { background: color-mix(in srgb, var(--accent) 72%, var(--surface-secondary)); }
+.heatmap-cell[data-level="4"] { background: var(--accent); }
+.heatmap-cell:hover { outline: 1.5px solid var(--text-secondary); }
+
+/* Distribution / legend rows */
+.legend-row { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+.legend-swatch { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.legend-bar-track { flex: 1; height: 6px; border-radius: var(--radius-full); background: var(--surface-secondary); overflow: hidden; }
+.legend-bar-fill { height: 100%; border-radius: var(--radius-full); }
+.legend-value { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-secondary); width: 52px; text-align: right; flex-shrink: 0; }
+
+/* Sparkline */
+.sparkline { display: block; }
+.sparkline path { fill: none; stroke: var(--chart-1); stroke-width: 1.75; }

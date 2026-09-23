@@ -1,0 +1,41 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}{{ note.title|default:"Note" }} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:600px;">
+  <div class="flex items-center justify-between" style="margin-bottom:var(--space-4);">
+    <a href="{% url 'notes:list' %}" class="text-sm text-muted">{% icon "chevron-left" size=13 %} Notes</a>
+    <span id="autosave-status" class="text-xs text-muted">Saved</span>
+  </div>
+
+  <form id="note-form" onsubmit="return false;" class="stack">
+    {% csrf_token %}
+    <input class="input" style="font-size:var(--text-xl); font-weight:650; border:none; padding:0; background:transparent;" name="title" id="id_title" value="{{ note.title }}" placeholder="Untitled">
+    <div class="field-row">
+      <div class="field"><label class="field-label">Project</label>{{ form.project }}</div>
+      <div class="field"><label class="field-label">Task</label>{{ form.task }}</div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label class="field-label">Person</label>{{ form.person }}</div>
+      <div class="field"><label class="field-label">Course</label>{{ form.course }}</div>
+    </div>
+    <div class="field"><label class="field-label">Goal</label>{{ form.goal }}</div>
+    <textarea class="textarea" name="content" id="id_content" rows="16" placeholder="Write in Markdown…">{{ note.content }}</textarea>
+  </form>
+
+  <form method="post" action="{% url 'notes:delete' note.pk %}" onsubmit="return confirm('Delete this note?');" style="margin-top:var(--space-4);">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-ghost btn-sm text-danger">{% icon "trash" size=13 %} Delete</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  const form = document.getElementById("note-form");
+  const status = document.getElementById("autosave-status");
+  LifeOS.autosave(form, status, "{% url 'notes:autosave' note.pk %}");
+})();
+</script>
+{% endblock %}

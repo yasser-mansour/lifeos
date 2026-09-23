@@ -1,0 +1,43 @@
+{% extends "layout/base.html" %}
+{% block title %}Welcome to LIFEOS{% endblock %}
+{% block body %}
+<div class="flex items-center justify-center" style="min-height:100vh; background:var(--bg-secondary);">
+  <div class="surface" style="width:460px; padding:var(--space-8);">
+    <div class="flex items-center gap-2" style="margin-bottom:var(--space-6);">
+      <span class="sidebar-mark" style="width:30px;height:30px;border-radius:9px;"></span>
+      <span style="font-weight:700; font-size:var(--text-xl); letter-spacing:-0.01em;">LIFEOS</span>
+    </div>
+
+    <h1 class="text-xl weight-semibold" style="margin-bottom:4px;">What do you want LIFEOS to help you manage?</h1>
+    <p class="text-secondary text-sm" style="margin-bottom:var(--space-5);">You can change this any time in Settings — turning something off never deletes its data.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="stack-sm" style="margin-bottom:var(--space-5);">
+        {% for field in form %}
+          {% if field.initial %}
+            <label class="flex items-center gap-3" style="padding:var(--space-2) 0;">
+              {{ field }}
+              <span class="text-sm">{{ field.label }}</span>
+            </label>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="text-xs text-muted" style="margin-bottom:var(--space-2); text-transform:uppercase; letter-spacing:0.04em;">Also available</div>
+      <div class="stack-sm" style="margin-bottom:var(--space-6);">
+        {% for field in form %}
+          {% if not field.initial %}
+            <label class="flex items-center gap-3" style="padding:var(--space-2) 0;">
+              {{ field }}
+              <span class="text-sm">{{ field.label }}</span>
+            </label>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Continue</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

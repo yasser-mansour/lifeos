@@ -1,0 +1,127 @@
+{% load icons %}
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <span class="sidebar-mark"></span>
+    <span class="sidebar-brand-word">LIFEOS</span>
+  </div>
+
+  <button class="sidebar-search" data-open-overlay="command-palette" type="button">
+    {% icon "search" size=15 %}
+    <span class="sidebar-label">Search</span>
+    <span class="sidebar-search-hint">⌘K</span>
+  </button>
+
+  <div class="sidebar-scroll">
+    <div class="sidebar-section">
+      <a href="{% url 'dashboard:home' %}" class="sidebar-item {% if active_nav == 'home' %}active{% endif %}">
+        {% icon "home" %}<span class="sidebar-label">Home</span>
+      </a>
+      <a href="{% url 'inbox:list' %}" class="sidebar-item {% if active_nav == 'inbox' %}active{% endif %}">
+        {% icon "inbox" %}<span class="sidebar-label">Inbox</span>
+        {% if inbox_unprocessed_count %}<span class="sidebar-item-badge">{{ inbox_unprocessed_count }}</span>{% endif %}
+      </a>
+    </div>
+
+    {% if not lifeos_profile or "focus" in lifeos_profile.enabled_modules or "school" in lifeos_profile.enabled_modules %}
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Focus</div>
+      {% if not lifeos_profile or "focus" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'focus:overview' %}" class="sidebar-item {% if active_nav == 'focus' %}active{% endif %}">
+        {% icon "play" %}<span class="sidebar-label">Focus</span>
+      </a>
+      {% endif %}
+      {% if not lifeos_profile or "school" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'study:overview' %}" class="sidebar-item {% if active_nav == 'study' %}active{% endif %}">
+        {% icon "study" %}<span class="sidebar-label">Study</span>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if not lifeos_profile or "tasks" in lifeos_profile.enabled_modules or "calendar" in lifeos_profile.enabled_modules or "projects" in lifeos_profile.enabled_modules %}
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Organize</div>
+      {% if not lifeos_profile or "tasks" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'tasks:list' %}" class="sidebar-item {% if active_nav == 'tasks' %}active{% endif %}">
+        {% icon "tasks" %}<span class="sidebar-label">Tasks</span>
+      </a>
+      {% endif %}
+      {% if not lifeos_profile or "calendar" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'calendar_app:month' %}" class="sidebar-item {% if active_nav == 'calendar' %}active{% endif %}">
+        {% icon "calendar" %}<span class="sidebar-label">Calendar</span>
+      </a>
+      {% endif %}
+      {% if not lifeos_profile or "projects" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'projects:list' %}" class="sidebar-item {% if active_nav == 'projects' %}active{% endif %}">
+        {% icon "projects" %}<span class="sidebar-label">Projects</span>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if not lifeos_profile or "people" in lifeos_profile.enabled_modules or "finance" in lifeos_profile.enabled_modules %}
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Work</div>
+      {% if not lifeos_profile or "people" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'people:list' %}" class="sidebar-item {% if active_nav == 'people' %}active{% endif %}">
+        {% icon "people" %}<span class="sidebar-label">People & Organizations</span>
+      </a>
+      {% endif %}
+      {% if not lifeos_profile or "finance" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'finance:overview' %}" class="sidebar-item {% if active_nav == 'finance' %}active{% endif %}">
+        {% icon "finance" %}<span class="sidebar-label">Finance</span>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if not lifeos_profile or "journal" in lifeos_profile.enabled_modules or "writing" in lifeos_profile.enabled_modules or "goals" in lifeos_profile.enabled_modules or "notes" in lifeos_profile.enabled_modules %}
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Personal</div>
+      {% if not lifeos_profile or "journal" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'journal:list' %}" class="sidebar-item {% if active_nav == 'journal' %}active{% endif %}">
+        {% icon "journal" %}<span class="sidebar-label">Journal</span>
+      </a>
+      {% endif %}
+      {% if not lifeos_profile or "writing" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'writing:library' %}" class="sidebar-item {% if active_nav == 'writing' %}active{% endif %}">
+        {% icon "writing" %}<span class="sidebar-label">Writing</span>
+      </a>
+      {% endif %}
+      {% if not lifeos_profile or "goals" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'goals:list' %}" class="sidebar-item {% if active_nav == 'goals' %}active{% endif %}">
+        {% icon "goals" %}<span class="sidebar-label">Goals</span>
+      </a>
+      {% endif %}
+      {% if not lifeos_profile or "notes" in lifeos_profile.enabled_modules %}
+      <a href="{% url 'notes:list' %}" class="sidebar-item {% if active_nav == 'notes' %}active{% endif %}">
+        {% icon "notes" %}<span class="sidebar-label">Notes</span>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">System</div>
+      <button type="button" class="sidebar-item" data-open-overlay="command-palette" style="width:100%; text-align:left;">
+        {% icon "search" %}<span class="sidebar-label">Search</span>
+      </button>
+      <a href="{% url 'devices:list' %}" class="sidebar-item {% if active_nav == 'devices' %}active{% endif %}">
+        {% icon "devices" %}<span class="sidebar-label">Devices</span>
+      </a>
+      <a href="{% url 'core:settings' %}" class="sidebar-item {% if active_nav == 'settings' %}active{% endif %}">
+        {% icon "settings" %}<span class="sidebar-label">Settings</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="btn btn-ghost btn-icon btn-sm" data-sidebar-toggle type="button" title="Collapse sidebar">
+      {% icon "chevron-left" size=14 %}
+    </button>
+    <a href="{% url 'core:settings' %}" class="flex items-center gap-2 flex-1" style="min-width:0;">
+      <span class="avatar">{% if lifeos_profile %}{{ lifeos_profile.display_name|slice:":2"|upper }}{% else %}?{% endif %}</span>
+      <span class="sidebar-label text-sm truncate">{{ lifeos_profile.display_name|default:"Owner" }}</span>
+    </a>
+  </div>
+</nav>

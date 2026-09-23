@@ -1,0 +1,33 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Study History — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header"><div class="page-title">Study History</div></div>
+
+  {% if grouped %}
+    {% for day, sessions in grouped %}
+      <div class="timeline-day">
+        <div class="timeline-day-label">{{ day|date:"l, M j" }}</div>
+        {% for session in sessions %}
+          <a href="{{ session.get_absolute_url }}" class="timeline-entry" style="text-decoration:none; color:inherit;">
+            <div class="timeline-time">{{ session.started_at|time:"H:i" }}</div>
+            <div class="timeline-content">
+              <div class="timeline-primary">{{ session.focus_title }}</div>
+              <div class="timeline-secondary mono">{{ session.duration_seconds|duration_compact }}</div>
+              <div class="timeline-tertiary">{{ session.started_at|time:"H:i" }}{% if session.ended_at %} → {{ session.ended_at|time:"H:i" }}{% endif %} · {{ session.get_mode_display }}{% if session.origin_device %} · {{ session.origin_device.name }}{% endif %}</div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "clock" size=18 %}</div>
+      <div class="empty-state-title">No sessions yet</div>
+      <div class="empty-state-body">Your completed study sessions will build a timeline here.</div>
+      <a href="{% url 'study:start' %}?domain=school" class="btn btn-primary btn-sm">Start Study</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

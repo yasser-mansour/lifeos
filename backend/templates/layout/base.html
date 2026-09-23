@@ -1,0 +1,25 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en"{% if lifeos_profile and lifeos_profile.theme == "dark" %} data-theme="dark"{% elif lifeos_profile and lifeos_profile.theme == "light" %} data-theme="light"{% endif %}>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>{% block title %}LIFEOS{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/charts.css' %}">
+  {% block extra_head %}{% endblock %}
+  <script>
+    (function() {
+      var saved = localStorage.getItem("lifeos-theme");
+      if (saved === "light" || saved === "dark") document.documentElement.setAttribute("data-theme", saved);
+    })();
+  </script>
+</head>
+<body>
+{% block body %}{% endblock %}
+<script src="{% static 'js/app.js' %}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,7 @@
+{% extends "layout/app_shell.html" %}
+{% block title %}{{ person.name }} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:620px;">
+  {% include "people/_detail_panel.html" %}
+</div>
+{% endblock %}

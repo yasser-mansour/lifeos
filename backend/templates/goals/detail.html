@@ -1,0 +1,91 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}{{ goal.title }} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:560px;">
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ goal.title }}</div>
+      <div class="page-subtitle">
+        {{ goal.get_goal_type_display }}{% if goal.deadline %} · Due {{ goal.deadline }}{% if goal.is_overdue %} <span class="text-danger">overdue</span>{% endif %}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="stack-sm" style="margin-bottom:var(--space-5);">
+    {% if goal.project %}<div class="flex justify-between text-sm"><span class="text-muted">Project</span><a href="{{ goal.project.get_absolute_url }}">{{ goal.project.name }}</a></div>{% endif %}
+    {% if goal.course %}<div class="flex justify-between text-sm"><span class="text-muted">Course</span><a href="{{ goal.course.get_absolute_url }}">{{ goal.course.name }}</a></div>{% endif %}
+    <div class="flex justify-between text-sm"><span class="text-muted">Status</span><span>{{ goal.get_status_display }}</span></div>
+  </div>
+
+  {% if goal.target_value %}
+    <div class="section">
+      <div class="flex items-center justify-between" style="margin-bottom:4px;">
+        <div class="eyebrow">Progress</div>
+        <span class="mono text-sm">{{ goal.effective_current_value }} / {{ goal.target_value }} {{ goal.unit }}</span>
+      </div>
+      {% if goal.progress_percent is not None %}
+        <div class="progress-track"><div class="progress-fill" style="width:{{ goal.progress_percent }}%;"></div></div>
+      {% endif %}
+      {% if not goal.derive_from_study_hours %}
+        <form method="post" action="{% url 'goals:update_progress' goal.pk %}" class="flex gap-2" style="margin-top:var(--space-3);">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ goal.get_absolute_url }}">
+          <input class="input" type="number" step="0.01" name="current_value" value="{{ goal.current_value }}" style="width:120px;">
+          <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+        </form>
+      {% else %}
+        <div class="text-xs text-muted" style="margin-top:var(--space-2);">Auto-tracked from Study hours{% if goal.course %} on {{ goal.course.name }}{% endif %}.</div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if goal.description %}
+    <div class="section"><div class="eyebrow" style="margin-bottom:4px;">Description</div><div class="text-sm text-secondary" style="white-space:pre-wrap;">{{ goal.description }}</div></div>
+  {% endif %}
+
+  <div class="section">
+    <div class="flex items-center justify-between" style="margin-bottom:var(--space-2);">
+      <div class="eyebrow">Notes</div>
+      <a href="{% url 'notes:new' %}?goal={{ goal.pk }}" class="text-xs text-muted">+ New Note</a>
+    </div>
+    {% if goal.linked_notes.all %}
+      <div class="list">
+        {% for note in goal.linked_notes.all %}
+          <a href="{{ note.get_absolute_url }}" class="list-row"><div class="list-row-title text-sm">{{ note.title|default:"Untitled note" }}</div></a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-sm text-muted">No notes yet.</div>
+    {% endif %}
+  </div>
+
+  <details class="form-advanced" style="margin-bottom:var(--space-4);">
+    <summary>Edit</summary>
+    <form method="post" action="{% url 'goals:update' goal.pk %}" class="stack form-advanced-body">
+      {% csrf_token %}
+      <div class="field"><label class="field-label">Title</label>{{ edit_form.title }}</div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Type</label>{{ edit_form.goal_type }}</div>
+        <div class="field"><label class="field-label">Deadline</label>{{ edit_form.deadline }}</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Target</label>{{ edit_form.target_value }}</div>
+        <div class="field"><label class="field-label">Unit</label>{{ edit_form.unit }}</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Project</label>{{ edit_form.project }}</div>
+        <div class="field"><label class="field-label">Course</label>{{ edit_form.course }}</div>
+      </div>
+      <label class="flex items-center gap-2 text-sm">{{ edit_form.derive_from_study_hours }} Auto-track from Study hours</label>
+      <div class="field"><label class="field-label">Description</label>{{ edit_form.description }}</div>
+      <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start;">Save Changes</button>
+    </form>
+  </details>
+
+  <form method="post" action="{% url 'goals:delete' goal.pk %}" onsubmit="return confirm('Remove goal {{ goal.title }}?');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-ghost btn-sm text-danger">{% icon "trash" size=13 %} Remove</button>
+  </form>
+</div>
+{% endblock %}

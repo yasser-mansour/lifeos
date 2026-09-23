@@ -1,0 +1,121 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Study Statistics — LIFEOS{% endblock %}
+{% block content %}
+<div class="page page-wide">
+  <div class="page-header"><div class="page-title">Study Statistics</div></div>
+
+  <div class="section">
+    <div class="eyebrow" style="margin-bottom:var(--space-3);">Time</div>
+    <div class="flex gap-8" style="flex-wrap:wrap;">
+      <div><div class="text-xs text-muted">Today</div><div class="text-lg weight-semibold mono">{{ stats.time.today|duration_compact }}</div></div>
+      <div><div class="text-xs text-muted">Yesterday</div><div class="text-lg weight-semibold mono">{{ stats.time.yesterday|duration_compact }}</div></div>
+      <div><div class="text-xs text-muted">This week</div><div class="text-lg weight-semibold mono">{{ stats.time.this_week|duration_compact }}</div></div>
+      <div><div class="text-xs text-muted">Last week</div><div class="text-lg weight-semibold mono">{{ stats.time.last_week|duration_compact }}</div></div>
+      <div><div class="text-xs text-muted">This month</div><div class="text-lg weight-semibold mono">{{ stats.time.this_month|duration_compact }}</div></div>
+      <div><div class="text-xs text-muted">This year</div><div class="text-lg weight-semibold mono">{{ stats.time.this_year|duration_compact }}</div></div>
+      <div><div class="text-xs text-muted">All time</div><div class="text-lg weight-semibold mono">{{ stats.time.all_time|duration_compact }}</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="eyebrow" style="margin-bottom:var(--space-3);">Consistency heatmap</div>
+    <div class="heatmap" style="overflow-x:auto;">
+      {% for row in heatmap_rows %}
+        <div class="heatmap-row">
+          {% for day in row %}
+            {% if day %}
+              <div class="heatmap-cell" data-level="{{ day.level }}" title="{{ day.date }} · {{ day.seconds|duration_compact }}"></div>
+            {% else %}
+              <div class="heatmap-cell" style="background:transparent;"></div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="flex gap-8" style="align-items:flex-start; flex-wrap:wrap;">
+    <div class="section" style="min-width:280px;">
+      <div class="eyebrow" style="margin-bottom:var(--space-3);">Sessions</div>
+      <div class="stack-sm">
+        <div class="flex justify-between text-sm"><span class="text-secondary">Total</span><span class="mono">{{ stats.sessions.total }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Completed</span><span class="mono">{{ stats.sessions.completed }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Abandoned</span><span class="mono">{{ stats.sessions.abandoned }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Interrupted (paused)</span><span class="mono">{{ stats.sessions.interrupted }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Average</span><span class="mono">{{ stats.sessions.average|duration_compact }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Median</span><span class="mono">{{ stats.sessions.median|duration_compact }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Longest</span><span class="mono">{{ stats.sessions.longest|duration_compact }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Shortest</span><span class="mono">{{ stats.sessions.shortest|duration_compact }}</span></div>
+      </div>
+    </div>
+
+    <div class="section" style="min-width:280px;">
+      <div class="eyebrow" style="margin-bottom:var(--space-3);">Consistency</div>
+      <div class="stack-sm">
+        <div class="flex justify-between text-sm"><span class="text-secondary">Current streak</span><span class="mono">{{ stats.consistency.current_streak }} days</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Longest streak</span><span class="mono">{{ stats.consistency.longest_streak }} days</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Study days</span><span class="mono">{{ stats.consistency.study_days }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-secondary">Avg / study day</span><span class="mono">{{ stats.consistency.avg_seconds_per_study_day|duration_compact }}</span></div>
+      </div>
+    </div>
+
+    <div class="section" style="min-width:280px;">
+      <div class="eyebrow" style="margin-bottom:var(--space-3);">By course</div>
+      <div class="stack-sm">
+        {% for name, seconds in stats.distribution.course.items %}
+          <div class="legend-row">
+            <span class="legend-swatch" style="background:var(--chart-1);"></span>
+            <span class="flex-1 truncate">{{ name }}</span>
+            <span class="legend-value">{{ seconds|duration_compact }}</span>
+          </div>
+        {% empty %}
+          <div class="text-sm text-muted">No data yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="section" style="min-width:280px;">
+      <div class="eyebrow" style="margin-bottom:var(--space-3);">By mode</div>
+      <div class="stack-sm">
+        {% for name, seconds in stats.distribution.mode.items %}
+          <div class="legend-row">
+            <span class="legend-swatch" style="background:var(--chart-2);"></span>
+            <span class="flex-1 truncate">{{ name }}</span>
+            <span class="legend-value">{{ seconds|duration_compact }}</span>
+          </div>
+        {% empty %}
+          <div class="text-sm text-muted">No data yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="section" style="min-width:280px;">
+      <div class="eyebrow" style="margin-bottom:var(--space-3);">By device</div>
+      <div class="stack-sm">
+        {% for name, seconds in stats.distribution.device.items %}
+          <div class="legend-row">
+            <span class="legend-swatch" style="background:var(--chart-3);"></span>
+            <span class="flex-1 truncate">{{ name }}</span>
+            <span class="legend-value">{{ seconds|duration_compact }}</span>
+          </div>
+        {% empty %}
+          <div class="text-sm text-muted">No data yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="eyebrow" style="margin-bottom:var(--space-3);">By weekday</div>
+    <div class="flex gap-2" style="align-items:flex-end; height:70px;">
+      {% for weekday, seconds in stats.patterns.weekday.items %}
+        <div class="flex-col items-center gap-1" style="flex:1; height:100%; justify-content:flex-end;">
+          <div style="width:100%; border-radius:4px 4px 0 0; height:{{ seconds|percent:14400 }}%; min-height:2px; background:var(--chart-1);"></div>
+          <span class="text-xs text-muted">{{ weekday }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

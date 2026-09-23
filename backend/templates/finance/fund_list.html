@@ -1,0 +1,70 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Funds — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  {% include "layout/_location_bar.html" %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Funds</div>
+      <div class="page-subtitle">What your money is <em>for</em> — separate from which account it physically sits in.</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" data-open-overlay="new-fund">{% icon "plus" size=14 %} Add Fund</button>
+    </div>
+  </div>
+
+  <div class="section-header"><div class="eyebrow">Personal</div></div>
+  {% if personal_funds %}
+    <div class="list" style="margin-bottom:var(--space-3);">
+      {% for entry in personal_funds %}
+        <a href="{% url 'finance:fund_detail' entry.fund.pk %}" class="list-row">
+          <div class="list-row-main"><div class="list-row-title text-sm">{{ entry.fund.name }}</div>{% if entry.fund.project %}<div class="list-row-meta">{{ entry.fund.project.name }}</div>{% endif %}</div>
+          <span class="mono text-sm weight-medium">{{ entry.balance|money }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-sm text-muted" style="margin-bottom:var(--space-3);">No personal funds yet — try "Living" or "Family Support".</div>
+  {% endif %}
+  <div class="flex justify-between text-sm text-muted" style="margin-bottom:var(--space-8);">
+    <span>Unallocated</span><span class="mono">{{ unallocated_personal|money }}</span>
+  </div>
+
+  <div class="section-header"><div class="eyebrow">Business</div></div>
+  {% if business_funds %}
+    <div class="list" style="margin-bottom:var(--space-3);">
+      {% for entry in business_funds %}
+        <a href="{% url 'finance:fund_detail' entry.fund.pk %}" class="list-row">
+          <div class="list-row-main"><div class="list-row-title text-sm">{{ entry.fund.name }}</div>{% if entry.fund.project %}<div class="list-row-meta">{{ entry.fund.project.name }}</div>{% endif %}</div>
+          <span class="mono text-sm weight-medium">{{ entry.balance|money }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-sm text-muted" style="margin-bottom:var(--space-3);">No business funds yet — try one per project, e.g. its name.</div>
+  {% endif %}
+  <div class="flex justify-between text-sm text-muted">
+    <span>Unallocated</span><span class="mono">{{ unallocated_business|money }}</span>
+  </div>
+</div>
+
+<div class="modal-backdrop{% if show_new %} open{% endif %}" id="new-fund">
+  <div class="modal">
+    <div class="modal-header">Add Fund</div>
+    <form method="post" action="{% url 'finance:fund_create' %}">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ form.name }}</div>
+        <div class="field"><label class="field-label">Context</label>{{ form.context }}</div>
+        <div class="field"><label class="field-label">Project (optional)</label>{{ form.project }}</div>
+        <div class="field"><label class="field-label">Notes</label>{{ form.notes }}</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-fund">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Fund</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

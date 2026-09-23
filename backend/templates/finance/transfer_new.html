@@ -1,0 +1,33 @@
+{% extends "layout/app_shell.html" %}
+{% block title %}{% if transfer %}Edit Transfer{% else %}Transfer{% endif %} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:440px;">
+  <div class="page-header"><div class="page-title">{% if transfer %}Edit Transfer{% else %}Transfer{% endif %}</div></div>
+  <p class="text-sm text-secondary" style="margin-bottom:var(--space-5);">
+    Moves money between accounts, funds, or both. Never counted as income or expense — leave Fund blank on both sides for an ordinary bank↔cash move, or leave Account the same on both sides to move money between funds without it physically going anywhere (e.g. taking profit from a project into Personal).
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <div class="stack">
+      <div class="field-row">
+        <div class="field"><label class="field-label">From account</label>{{ form.from_account }}</div>
+        <div class="field"><label class="field-label">To account</label>{{ form.to_account }}</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">From fund (optional)</label>{{ form.from_fund }}</div>
+        <div class="field"><label class="field-label">To fund (optional)</label>{{ form.to_fund }}</div>
+      </div>
+      {% if form.non_field_errors %}<div class="field-error">{{ form.non_field_errors.0 }}</div>{% endif %}
+      <div class="field-row">
+        <div class="field"><label class="field-label">Amount</label>{{ form.amount }}</div>
+        <div class="field"><label class="field-label">Currency</label>{{ form.currency }}</div>
+      </div>
+      <div class="field"><label class="field-label">Date</label>{{ form.date }}</div>
+      <div class="field"><label class="field-label">Description</label>{{ form.description }}</div>
+      <div class="field"><label class="field-label">Notes</label>{{ form.notes }}</div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block" style="margin-top:var(--space-6);">{% if transfer %}Save Changes{% else %}Transfer{% endif %}</button>
+  </form>
+</div>
+{% endblock %}

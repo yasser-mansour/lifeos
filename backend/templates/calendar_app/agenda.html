@@ -1,0 +1,37 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Agenda — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div><div class="page-title">Agenda</div></div>
+    <div class="page-actions">
+      <a href="{% url 'calendar_app:month' %}" class="btn btn-ghost">Month</a>
+      <a href="{% url 'calendar_app:event_new' %}" class="btn btn-primary">{% icon "plus" size=14 %} New Event</a>
+    </div>
+  </div>
+  {% if events %}
+    <div class="list">
+      {% for event in events %}
+        <a href="{% url 'calendar_app:event_edit' event.pk %}" class="list-row">
+          <div class="list-row-main">
+            <div class="list-row-title">{{ event.title }}</div>
+            <div class="list-row-meta">
+              {{ event.start|date:"D, M j" }}{% if not event.all_day %} · {{ event.start|time:"H:i" }}{% endif %}{% if event.location %} · {{ event.location }}{% endif %}
+              {% if event.project %} · {{ event.project.name }}{% endif %}{% if event.person %} · {{ event.person.name }}{% endif %}{% if event.course %} · {{ event.course.name }}{% endif %}
+            </div>
+          </div>
+          <span class="badge badge-neutral">{{ event.get_category_display }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "calendar" size=18 %}</div>
+      <div class="empty-state-title">Nothing upcoming</div>
+      <div class="empty-state-body">Scheduled events will appear here in order.</div>
+      <a href="{% url 'calendar_app:event_new' %}" class="btn btn-primary btn-sm">New Event</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

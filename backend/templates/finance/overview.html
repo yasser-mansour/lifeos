@@ -1,0 +1,157 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Finance — LIFEOS{% endblock %}
+{% block content %}
+<div class="page page-wide">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Finance</div>
+      <div class="page-subtitle">
+        <a href="{% url 'finance:all_activity' %}">All Activity</a> ·
+        <a href="{% url 'finance:fund_list' %}">Funds</a> ·
+        <a href="{% url 'finance:recurring_list' %}">Recurring</a> ·
+        <a href="{% url 'finance:category_list' %}">Categories</a> ·
+        <a href="{% url 'finance:reclassify' %}">Review Structure</a>
+      </div>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'finance:transfer_new' %}" class="btn btn-secondary">{% icon "transfer" size=14 %} Transfer</a>
+      <a href="{% url 'finance:transaction_new' %}" class="btn btn-primary">{% icon "plus" size=14 %} Add Transaction</a>
+    </div>
+  </div>
+
+  <div class="flex gap-6" style="align-items:flex-start; margin-bottom:var(--space-8); flex-wrap:wrap;">
+    <div class="flex-1 surface" style="min-width:260px;">
+      <div class="eyebrow" style="margin-bottom:var(--space-3);">Total</div>
+      <div class="text-3xl weight-semibold mono" style="margin-bottom:var(--space-3);">{{ combined_total|money }}</div>
+      {% if by_type %}
+        <div class="flex gap-4" style="margin-bottom:var(--space-3); flex-wrap:wrap;">
+          {% for row in by_type %}
+            <div><span class="text-xs text-muted">{{ row.label }}</span> <span class="text-sm weight-medium mono">{{ row.total|money }}</span></div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="text-sm text-muted">Personal + Business combined, across {{ account_count }} account{{ account_count|pluralize }}. Transfers between them don't change this.</div>
+    </div>
+
+    <div class="flex-1 surface" style="min-width:260px;">
+      <div class="flex items-center justify-between" style="margin-bottom:var(--space-3);">
+        <a href="{% url 'finance:context_detail' 'personal' %}" class="eyebrow">Personal</a>
+        <button class="text-xs text-muted" data-open-overlay="new-account-personal">+ Add Account</button>
+      </div>
+      <div class="text-3xl weight-semibold mono" style="margin-bottom:var(--space-4);">{{ personal.total_balance|money }}</div>
+      {% if personal.accounts %}
+        <div class="stack-sm">
+          {% for row in personal.accounts %}
+            <a href="{{ row.account.get_absolute_url }}" class="flex items-center justify-between text-sm">
+              <span class="text-secondary">{{ row.account.name }}</span>
+              <span class="mono">{{ row.balance|money:row.account.currency }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-sm text-muted">No personal accounts yet.</div>
+      {% endif %}
+    </div>
+
+    <div class="flex-1 surface" style="min-width:260px;">
+      <div class="flex items-center justify-between" style="margin-bottom:var(--space-3);">
+        <a href="{% url 'finance:context_detail' 'business' %}" class="eyebrow">Business</a>
+        <button class="text-xs text-muted" data-open-overlay="new-account-business">+ Add Account</button>
+      </div>
+      <div class="text-3xl weight-semibold mono" style="margin-bottom:var(--space-4);">{{ business.total_balance|money }}</div>
+      {% if business.accounts %}
+        <div class="stack-sm">
+          {% for row in business.accounts %}
+            <a href="{{ row.account.get_absolute_url }}" class="flex items-center justify-between text-sm">
+              <span class="text-secondary">{{ row.account.name }}</span>
+              <span class="mono">{{ row.balance|money:row.account.currency }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-sm text-muted">No business accounts yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="flex gap-6" style="align-items:flex-start;">
+    <div class="flex-1 section" style="min-width:0;">
+      <div class="section-header"><div class="eyebrow">This month</div></div>
+      <div class="flex gap-6" style="margin-bottom:var(--space-2);">
+        <div><div class="text-xs text-muted">Income</div><div class="text-lg weight-semibold mono text-success">{{ personal.month_income|add:business.month_income|money }}</div></div>
+        <div><div class="text-xs text-muted">Expenses</div><div class="text-lg weight-semibold mono">{{ personal.month_expenses|add:business.month_expenses|money }}</div></div>
+        <div><div class="text-xs text-muted">Net</div><div class="text-lg weight-semibold mono">{{ personal.month_net|add:business.month_net|money }}</div></div>
+      </div>
+    </div>
+    <div class="flex-1 section" style="min-width:0;">
+      <div class="section-header"><div class="eyebrow">Safe to spend</div></div>
+      <div class="flex items-center gap-4">
+        <div class="text-lg weight-semibold mono {% if safe_to_spend.safe_to_spend < 0 %}text-danger{% else %}text-success{% endif %}">{{ safe_to_spend.safe_to_spend|money }}</div>
+        <div class="text-xs text-muted">next {{ safe_to_spend.horizon_days }} days, personal, after {{ safe_to_spend.expected_commitments|money }} in commitments{% if safe_to_spend.reserved %} and {{ safe_to_spend.reserved|money }} reserved{% endif %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex gap-6" style="align-items:flex-start;">
+    <div class="flex-1 section" style="min-width:0;">
+      <div class="section-header"><div class="eyebrow">Upcoming commitments</div><a href="{% url 'finance:recurring_list' %}" class="text-xs text-muted">Manage</a></div>
+      {% if upcoming %}
+        <div class="list">
+          {% for item in upcoming %}
+            <div class="list-row">
+              <div class="list-row-main"><div class="list-row-title text-sm">{{ item.name }}</div><div class="list-row-meta">Due {{ item.next_due_date }}</div></div>
+              <span class="mono text-sm">{{ item.amount|money:item.currency }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-sm text-muted">Nothing expected soon.</div>
+      {% endif %}
+    </div>
+
+    <div class="flex-1 section" style="min-width:0;">
+      <div class="section-header"><div class="eyebrow">Recent activity</div><a href="{% url 'finance:all_activity' %}" class="text-xs text-muted">All activity</a></div>
+      {% if recent_events %}
+        <div class="list">
+          {% for event in recent_events %}
+            {% include "finance/_activity_row.html" with event=event show_account=True %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state" style="padding:var(--space-6);">
+          <div class="empty-state-body">No transactions yet.</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% for slug, label, form in personal_business_forms %}
+<div class="modal-backdrop{% if show_new_account == slug %} open{% endif %}" id="new-account-{{ slug }}">
+  <div class="modal">
+    <div class="modal-header">Add {{ label }} Account</div>
+    <form method="post" action="{% url 'finance:account_create' %}">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ form.name }}</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Type</label>{{ form.account_type }}</div>
+          <div class="field"><label class="field-label">Context</label>{{ form.context }}</div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Institution</label>{{ form.institution }}</div>
+          <div class="field"><label class="field-label">Currency</label>{{ form.currency }}</div>
+        </div>
+        <div class="field"><label class="field-label">Opening balance</label>{{ form.opening_balance }}</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-account-{{ slug }}">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Account</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

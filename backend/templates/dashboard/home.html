@@ -1,0 +1,79 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Home — LIFEOS{% endblock %}
+{% block extra_head %}
+<style>
+  .home-flow > * + * { border-top: 1px solid var(--border-subtle); margin-top: var(--space-8); padding-top: var(--space-8); }
+  .home-eyebrow-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page page-wide">
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ greeting }}, {{ lifeos_profile.display_name|default:"there" }}.</div>
+      <div class="page-subtitle">{{ today|date:"l, F j" }}</div>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'focus:start' %}" class="btn btn-secondary">{% icon "play" size=14 %} Start Focus</a>
+      <button class="btn btn-primary" data-open-overlay="quick-add">{% icon "plus" size=14 %} Quick Add</button>
+    </div>
+  </div>
+
+  <div class="home-flow">
+    <div>
+      <div class="home-eyebrow-row">
+        <a href="{% url 'tasks:list' %}" class="eyebrow">Next</a>
+        {% if next_tasks|length >= 5 %}<a href="{% url 'tasks:list' %}?view=all" class="text-xs text-muted">Show more</a>{% endif %}
+      </div>
+      {% include "dashboard/_next_tasks.html" %}
+    </div>
+
+    <div>
+      <div class="home-eyebrow-row">
+        <div class="eyebrow">Today</div>
+        <a href="{% url 'calendar_app:month' %}" class="text-xs text-muted">Calendar</a>
+      </div>
+      {% include "dashboard/_today.html" %}
+    </div>
+
+    <div class="flex gap-8" style="align-items:flex-start; flex-wrap:wrap;">
+      <div class="flex-1" style="min-width:240px;">
+        <div class="home-eyebrow-row">
+          <div class="eyebrow">Focus</div>
+          <a href="{% url 'study:overview' %}" class="text-xs text-muted">Study</a>
+        </div>
+        {% include "dashboard/_study_summary.html" %}
+      </div>
+      <div class="flex-1" style="min-width:240px;">
+        <div class="home-eyebrow-row">
+          <div class="eyebrow">Money</div>
+          <a href="{% url 'finance:overview' %}" class="text-xs text-muted">Finance</a>
+        </div>
+        {% include "dashboard/_finance_summary.html" %}
+      </div>
+    </div>
+
+    <div>
+      <div class="home-eyebrow-row">
+        <div class="eyebrow">Projects requiring attention</div>
+        <a href="{% url 'projects:list' %}" class="text-xs text-muted">All projects</a>
+      </div>
+      {% include "dashboard/_projects_attention.html" %}
+    </div>
+
+    <div>
+      <div class="home-eyebrow-row">
+        <div class="eyebrow">Waiting for</div>
+        <a href="{% url 'tasks:list' %}?view=waiting" class="text-xs text-muted">All waiting</a>
+      </div>
+      {% include "dashboard/_waiting_for.html" %}
+    </div>
+
+    <div>
+      <div class="home-eyebrow-row"><div class="eyebrow">Recent activity</div></div>
+      {% include "core/_activity_feed.html" with events=recent_activity %}
+    </div>
+  </div>
+</div>
+{% endblock %}

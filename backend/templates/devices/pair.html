@@ -1,0 +1,50 @@
+{% extends "layout/app_shell.html" %}
+{% block title %}Pair Device — LIFEOS{% endblock %}
+{% block content %}
+<div class="page flex-col items-center" style="max-width:420px; text-align:center;">
+  <div class="page-title" style="margin-bottom:var(--space-2);">Pair New Device</div>
+  <p class="text-sm text-secondary" style="margin-bottom:var(--space-6);">Open LIFEOS on your Android phone and scan this code. It expires in {{ lifetime_seconds }} seconds.</p>
+
+  <img src="{{ qr_data_uri }}" alt="Pairing QR code" style="width:240px; height:240px; border-radius:var(--radius-lg); border:1px solid var(--border-subtle);">
+
+  <div id="pair-status" class="text-sm text-secondary" style="margin-top:var(--space-5);">Waiting for scan…</div>
+  <a href="{% url 'devices:pair' %}" id="regenerate-link" class="btn btn-secondary btn-sm" style="margin-top:var(--space-4); display:none;">Generate new code</a>
+
+  <div class="divider" style="width:100%; margin:var(--space-6) 0;"></div>
+  <div style="width:100%; text-align:left;">
+    <div class="text-sm weight-medium" style="margin-bottom:var(--space-2);">Can't scan? Enter these manually</div>
+    <div class="text-sm text-secondary" style="margin-bottom:var(--space-1);">Open LIFEOS on your phone → Devices → Pair New Device → Enter manually, then type:</div>
+    <div class="stack-sm mono text-sm" style="background:var(--surface-secondary); border-radius:var(--radius-md); padding:var(--space-3);">
+      <div class="flex justify-between"><span class="text-muted">Host</span><span>{{ manual_host }}</span></div>
+      <div class="flex justify-between"><span class="text-muted">Port</span><span>{{ manual_port }}</span></div>
+      <div class="flex justify-between"><span class="text-muted">Code</span><span style="word-break:break-all; text-align:right;">{{ pairing_token.token }}</span></div>
+    </div>
+    <div class="text-xs text-muted" style="margin-top:var(--space-2);">This code expires in {{ lifetime_seconds }} seconds, same as the QR above.</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  const statusEl = document.getElementById("pair-status");
+  const regenLink = document.getElementById("regenerate-link");
+  const statusUrl = "{% url 'devices:pair_status' pairing_token.pk %}";
+  const listUrl = "{% url 'devices:list' %}";
+
+  const poll = setInterval(function () {
+    LifeOS.apiFetch(statusUrl).then((r) => r.json()).then((data) => {
+      if (data.paired) {
+        clearInterval(poll);
+        statusEl.textContent = "Paired with " + data.device_name + " — redirecting…";
+        setTimeout(() => { window.location.href = listUrl; }, 1200);
+      } else if (data.expired) {
+        clearInterval(poll);
+        statusEl.textContent = "This code expired.";
+        regenLink.style.display = "inline-flex";
+      }
+    });
+  }, 2000);
+})();
+</script>
+{% endblock %}

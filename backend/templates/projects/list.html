@@ -1,0 +1,74 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Projects — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Projects</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" data-open-overlay="new-project">{% icon "plus" size=14 %} New Project</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <a href="?" class="tab {% if not area %}active{% endif %}">All</a>
+    <a href="?area=business" class="tab {% if area == 'business' %}active{% endif %}">Business</a>
+    <a href="?area=school" class="tab {% if area == 'school' %}active{% endif %}">School</a>
+    <a href="?area=personal" class="tab {% if area == 'personal' %}active{% endif %}">Personal</a>
+  </div>
+
+  {% if projects %}
+    <div class="list">
+      {% for project in projects %}
+        <a href="{{ project.get_absolute_url }}" class="list-row">
+          <span class="dot {% if project.status == 'active' %}dot-success{% elif project.status == 'paused' %}dot-warning{% else %}dot-muted{% endif %}"></span>
+          <div class="list-row-main">
+            <div class="list-row-title">{{ project.name }}</div>
+            <div class="list-row-meta">{{ project.get_status_display }} · {{ project.get_area_display }}</div>
+          </div>
+          {% if project.target_date %}<span class="list-row-trail text-xs text-muted">Due {{ project.target_date }}</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "projects" size=18 %}</div>
+      <div class="empty-state-title">No projects yet</div>
+      <div class="empty-state-body">Business, school or personal — projects keep tasks, people, and finances connected in one place.</div>
+      <button class="btn btn-primary btn-sm" data-open-overlay="new-project">New Project</button>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal-backdrop{% if show_new %} open{% endif %}" id="new-project">
+  <div class="modal">
+    <div class="modal-header">New Project</div>
+    <form method="post" action="{% url 'projects:create' %}">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ form.name }}</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Area</label>{{ form.area }}</div>
+          <div class="field"><label class="field-label">Status</label>{{ form.status }}</div>
+        </div>
+        <details class="form-advanced">
+          <summary>More options</summary>
+          <div class="form-advanced-body">
+            <div class="field-row">
+              <div class="field"><label class="field-label">Priority</label>{{ form.priority }}</div>
+              <div class="field"><label class="field-label">Target date</label>{{ form.target_date }}</div>
+            </div>
+            <div class="field"><label class="field-label">Description</label>{{ form.description }}</div>
+          </div>
+        </details>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-project">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Project</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

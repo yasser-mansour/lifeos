@@ -1,0 +1,54 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Categories — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:480px;">
+  {% include "layout/_location_bar.html" %}
+  <div class="page-header">
+    <div><div class="page-title">Categories</div></div>
+    <div class="page-actions">
+      <button class="btn btn-primary" data-open-overlay="new-category">{% icon "plus" size=14 %} Add Category</button>
+    </div>
+  </div>
+
+  {% if categories %}
+    <div class="list">
+      {% for category in categories %}
+        <div class="list-row">
+          <span style="width:10px; height:10px; border-radius:50%; background:{{ category.color }}; flex-shrink:0;"></span>
+          <div class="list-row-main"><div class="list-row-title text-sm">{{ category.name }}</div><div class="list-row-meta">{{ category.get_context_display }}</div></div>
+          <form method="post" action="{% url 'finance:category_archive_toggle' category.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-sm text-muted">Archive</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-title">No categories yet</div>
+      <div class="empty-state-body">Categories are optional on every transaction — add the ones you actually use.</div>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal-backdrop{% if show_new %} open{% endif %}" id="new-category">
+  <div class="modal">
+    <div class="modal-header">Add Category</div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ form.name }}</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Color</label>{{ form.color }}</div>
+          <div class="field"><label class="field-label">Applies to</label>{{ form.context }}</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-category">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

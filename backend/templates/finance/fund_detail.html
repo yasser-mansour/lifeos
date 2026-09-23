@@ -1,0 +1,105 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}{{ fund.name }} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  {% include "layout/_location_bar.html" %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ fund.name }}</div>
+      <div class="page-subtitle">{{ fund.get_context_display }} fund{% if fund.project %} · {{ fund.project.name }}{% endif %}</div>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'finance:transaction_new' %}?fund={{ fund.pk }}" class="btn btn-primary">{% icon "plus" size=14 %} Add Transaction</a>
+    </div>
+  </div>
+
+  <div class="text-4xl weight-semibold mono" style="margin-bottom:var(--space-2);">{{ balance|money }}</div>
+
+  {% if account_breakdown %}
+  <div class="stack-xs" style="margin-bottom:var(--space-6);">
+    <div class="text-xs text-muted" style="margin-bottom:2px;">Stored in</div>
+    {% for account, amount in account_breakdown %}
+      <div class="flex justify-between text-sm">
+        <a href="{% url 'finance:account_detail' account.pk %}" class="text-secondary">{{ account.name }}</a>
+        <span class="mono">{{ amount|money:account.currency }}</span>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="section" style="margin-bottom:var(--space-6);">
+    <div class="eyebrow" style="margin-bottom:var(--space-2);">This month</div>
+    <div class="flex justify-between text-sm" style="margin-bottom:4px;"><span class="text-secondary">Spent</span><span class="mono weight-medium">{{ month.spent_this_month|money }}</span></div>
+    {% if month.added_this_month %}<div class="flex justify-between text-sm" style="margin-bottom:4px;"><span class="text-secondary">Added</span><span class="mono weight-medium text-success">{{ month.added_this_month|money }}</span></div>{% endif %}
+    {% if month.upcoming %}
+      <div class="flex justify-between text-sm weight-semibold" style="margin-bottom:var(--space-3);"><span>Upcoming</span><span class="mono">{{ month.upcoming_total|money }}</span></div>
+      <div class="list">
+        {% for item in month.upcoming %}
+          <div class="list-row"><div class="list-row-title text-sm">{{ item.name }}</div><div class="mono text-sm text-muted">{{ item.amount|money }} · {{ item.next_due_date|date:"M j" }}</div></div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if month.by_category %}
+      <div class="stack-xs" style="margin-top:var(--space-3);">
+        {% for category, amount in month.by_category.items %}
+          <div class="flex justify-between text-sm"><span class="text-muted">{{ category.name|default:"Uncategorized" }}</span><span class="mono">{{ amount|money }}</span></div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <details class="form-advanced" style="margin-bottom:var(--space-4);">
+    <summary>Edit fund</summary>
+    <form method="post" action="{% url 'finance:fund_update' fund.pk %}" class="stack form-advanced-body">
+      {% csrf_token %}
+      <div class="field"><label class="field-label">Name</label>{{ edit_form.name }}</div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Context</label>{{ edit_form.context }}</div>
+        <div class="field"><label class="field-label">Project</label>{{ edit_form.project }}</div>
+      </div>
+      <div class="field"><label class="field-label">Notes</label>{{ edit_form.notes }}</div>
+      <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start;">Save Changes</button>
+    </form>
+  </details>
+
+  <div class="flex gap-2" style="margin-bottom:var(--space-8);">
+    <form method="post" action="{% url 'finance:fund_archive_toggle' fund.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost btn-sm">Archive</button>
+    </form>
+    <button type="button" class="btn btn-ghost btn-sm text-danger" data-open-overlay="delete-fund">{% icon "trash" size=13 %} Delete</button>
+  </div>
+
+  <div class="section-header"><div class="eyebrow">Activity</div></div>
+  {% if events %}
+    <div class="list">
+      {% for event in events %}
+        {% include "finance/_activity_row.html" with event=event show_account=True %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "finance" size=18 %}</div>
+      <div class="empty-state-title">No activity yet</div>
+      <div class="empty-state-body">Tag a transaction or transfer with {{ fund.name }} and it'll show up here.</div>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal-backdrop" id="delete-fund">
+  <div class="modal">
+    <div class="modal-header">Delete {{ fund.name }}?</div>
+    <div class="modal-body stack-sm">
+      <div class="text-sm">Its transactions and transfers are kept — they'll just show as "Unallocated" instead of {{ fund.name }}.</div>
+    </div>
+    <form method="post" action="{% url 'finance:fund_delete' fund.pk %}">
+      {% csrf_token %}
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="delete-fund">Cancel</button>
+        <button type="submit" class="btn btn-danger">Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

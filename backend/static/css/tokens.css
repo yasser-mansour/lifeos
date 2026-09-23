@@ -1,0 +1,210 @@
+/* LIFEOS design tokens. See docs/UI_DESIGN.md for the full system. */
+
+:root {
+  /* --- Light (default) --- */
+  --bg-primary: #FAFAF9;
+  --bg-secondary: #F1F1EF;
+  --surface-primary: #FFFFFF;
+  --surface-secondary: #F6F6F5;
+  --surface-hover: rgba(24, 24, 27, 0.04);
+  --surface-active: rgba(24, 24, 27, 0.07);
+  --surface-overlay: #FFFFFF;
+
+  --border-subtle: rgba(24, 24, 27, 0.09);
+  --border-strong: rgba(24, 24, 27, 0.18);
+
+  --text-primary: #1C1C1F;
+  --text-secondary: #5B5B63;
+  --text-muted: #94949C;
+  --text-on-accent: #FFFFFF;
+
+  --accent: #4954E0;
+  --accent-hover: #3C46CC;
+  --accent-soft: rgba(73, 84, 224, 0.10);
+  --accent-soft-strong: rgba(73, 84, 224, 0.18);
+
+  --success: #17875A;
+  --success-soft: rgba(23, 135, 90, 0.11);
+  --warning: #A3660F;
+  --warning-soft: rgba(163, 102, 15, 0.12);
+  --danger: #C2403D;
+  --danger-soft: rgba(194, 64, 61, 0.11);
+  --info: #2C6FBD;
+  --info-soft: rgba(44, 111, 189, 0.11);
+
+  --chart-1: #4954E0;
+  --chart-2: #17875A;
+  --chart-3: #A3660F;
+  --chart-4: #C2403D;
+  --chart-5: #2C6FBD;
+  --chart-6: #8A5FD1;
+  --chart-grid: rgba(24, 24, 27, 0.06);
+
+  --shadow-color: 24, 24, 27;
+  --shadow-sm: 0 1px 2px rgba(var(--shadow-color), 0.06);
+  --shadow-md: 0 4px 16px rgba(var(--shadow-color), 0.10), 0 1px 2px rgba(var(--shadow-color), 0.06);
+  --shadow-lg: 0 12px 40px rgba(var(--shadow-color), 0.16), 0 2px 8px rgba(var(--shadow-color), 0.08);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Menlo", "Cascadia Code", monospace;
+
+  --text-xs: 0.6875rem;   /* 11px */
+  --text-sm: 0.8125rem;   /* 13px */
+  --text-base: 0.875rem;  /* 14px */
+  --text-md: 0.9375rem;   /* 15px */
+  --text-lg: 1.0625rem;   /* 17px */
+  --text-xl: 1.25rem;     /* 20px */
+  --text-2xl: 1.5rem;     /* 24px */
+  --text-3xl: 2rem;       /* 32px */
+  --text-4xl: 2.5rem;     /* 40px */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 999px;
+
+  --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Elevation ladder — every raised element picks a named rung rather than
+     inventing a one-off shadow/surface combination. See DESIGN_SYSTEM_V2.md. */
+  --elevation-0: var(--bg-primary);
+  --elevation-1: var(--surface-primary);
+  --elevation-2: var(--surface-overlay);
+  --elevation-2-shadow: var(--shadow-lg);
+  --elevation-3-shadow: var(--shadow-lg), 0 0 0 1px var(--border-subtle);
+
+  /* Motion — named durations; base.css collapses these to 0 under
+     prefers-reduced-motion so components never need their own branch. */
+  --motion-micro: 120ms;
+  --motion-panel: 200ms;
+  --motion-page: 140ms;
+  --motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --sidebar-width: 232px;
+  --sidebar-width-collapsed: 68px;
+  --topbar-height: 56px;
+  --location-bar-height: 40px;
+
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-micro: 0ms;
+    --motion-panel: 0ms;
+    --motion-page: 0ms;
+    --transition-fast: 0ms;
+    --transition-base: 0ms;
+  }
+}
+
+/* --- Dark: system preference --- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-primary: #0E0E10;
+    --bg-secondary: #141416;
+    --surface-primary: #1A1A1D;
+    --surface-secondary: #202023;
+    --surface-hover: rgba(255, 255, 255, 0.05);
+    --surface-active: rgba(255, 255, 255, 0.09);
+    --surface-overlay: #232326;
+
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+
+    --text-primary: #F1F1F3;
+    --text-secondary: #A6A6AD;
+    --text-muted: #717178;
+    --text-on-accent: #FFFFFF;
+
+    --accent: #8B93F5;
+    --accent-hover: #A1A8F7;
+    --accent-soft: rgba(139, 147, 245, 0.16);
+    --accent-soft-strong: rgba(139, 147, 245, 0.26);
+
+    --success: #3FCE94;
+    --success-soft: rgba(63, 206, 148, 0.14);
+    --warning: #E3A83B;
+    --warning-soft: rgba(227, 168, 59, 0.14);
+    --danger: #E27573;
+    --danger-soft: rgba(226, 117, 115, 0.14);
+    --info: #6FA8E0;
+    --info-soft: rgba(111, 168, 224, 0.14);
+
+    --chart-1: #8B93F5;
+    --chart-2: #3FCE94;
+    --chart-3: #E3A83B;
+    --chart-4: #E27573;
+    --chart-5: #6FA8E0;
+    --chart-6: #B79AE8;
+    --chart-grid: rgba(255, 255, 255, 0.07);
+
+    --shadow-color: 0, 0, 0;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.24);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.36);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+    color-scheme: dark;
+  }
+}
+
+/* --- Dark: explicit user choice (wins regardless of OS setting) --- */
+:root[data-theme="dark"] {
+  --bg-primary: #0E0E10;
+  --bg-secondary: #141416;
+  --surface-primary: #1A1A1D;
+  --surface-secondary: #202023;
+  --surface-hover: rgba(255, 255, 255, 0.05);
+  --surface-active: rgba(255, 255, 255, 0.09);
+  --surface-overlay: #232326;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --text-primary: #F1F1F3;
+  --text-secondary: #A6A6AD;
+  --text-muted: #717178;
+  --text-on-accent: #FFFFFF;
+
+  --accent: #8B93F5;
+  --accent-hover: #A1A8F7;
+  --accent-soft: rgba(139, 147, 245, 0.16);
+  --accent-soft-strong: rgba(139, 147, 245, 0.26);
+
+  --success: #3FCE94;
+  --success-soft: rgba(63, 206, 148, 0.14);
+  --warning: #E3A83B;
+  --warning-soft: rgba(227, 168, 59, 0.14);
+  --danger: #E27573;
+  --danger-soft: rgba(226, 117, 115, 0.14);
+  --info: #6FA8E0;
+  --info-soft: rgba(111, 168, 224, 0.14);
+
+  --chart-1: #8B93F5;
+  --chart-2: #3FCE94;
+  --chart-3: #E3A83B;
+  --chart-4: #E27573;
+  --chart-5: #6FA8E0;
+  --chart-6: #B79AE8;
+  --chart-grid: rgba(255, 255, 255, 0.07);
+
+  --shadow-color: 0, 0, 0;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.36);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
+}

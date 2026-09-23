@@ -1,0 +1,43 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Calendar — LIFEOS{% endblock %}
+{% block content %}
+<div class="page page-wide">
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ month_label }}</div>
+    </div>
+    <div class="page-actions">
+      <a href="?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-secondary btn-icon">{% icon "chevron-left" size=15 %}</a>
+      <a href="?year={{ next_year }}&month={{ next_month }}" class="btn btn-secondary btn-icon">{% icon "chevron-right" size=15 %}</a>
+      <a href="{% url 'calendar_app:agenda' %}" class="btn btn-ghost">Agenda</a>
+      <a href="{% url 'calendar_app:event_new' %}" class="btn btn-primary">{% icon "plus" size=14 %} New Event</a>
+    </div>
+  </div>
+
+  <div style="border:1px solid var(--border-subtle); border-radius:var(--radius-lg); overflow:hidden;">
+    <div class="flex" style="background:var(--surface-secondary);">
+      <div class="flex-1 text-xs text-muted weight-semibold" style="padding:8px; text-align:center;">Mon</div>
+      <div class="flex-1 text-xs text-muted weight-semibold" style="padding:8px; text-align:center;">Tue</div>
+      <div class="flex-1 text-xs text-muted weight-semibold" style="padding:8px; text-align:center;">Wed</div>
+      <div class="flex-1 text-xs text-muted weight-semibold" style="padding:8px; text-align:center;">Thu</div>
+      <div class="flex-1 text-xs text-muted weight-semibold" style="padding:8px; text-align:center;">Fri</div>
+      <div class="flex-1 text-xs text-muted weight-semibold" style="padding:8px; text-align:center;">Sat</div>
+      <div class="flex-1 text-xs text-muted weight-semibold" style="padding:8px; text-align:center;">Sun</div>
+    </div>
+    {% for week in weeks %}
+      <div class="flex" style="border-top:1px solid var(--border-subtle);">
+        {% for day in week %}
+          <div class="flex-1" style="min-height:96px; padding:6px; border-right:1px solid var(--border-subtle); {% if not day.in_month %}opacity:0.4;{% endif %} {% if day.date == today %}background:var(--accent-soft);{% endif %}">
+            <a href="{% url 'calendar_app:event_new' %}?date={{ day.date|date:'Y-m-d' }}T09:00"
+               class="text-xs {% if day.date == today %}text-accent weight-semibold{% else %}text-muted{% endif %}" style="display:block;">{{ day.date.day }}</a>
+            {% for event in day.events|slice:":3" %}
+              <a href="{% url 'calendar_app:event_edit' event.pk %}" class="text-xs truncate" style="display:block; margin-top:3px; padding:1px 4px; border-radius:4px; background:var(--surface-secondary);">{{ event.title }}</a>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

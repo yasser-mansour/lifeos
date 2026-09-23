@@ -1,0 +1,38 @@
+{% extends "layout/app_shell.html" %}
+{% block title %}{% if event %}Edit Event{% else %}New Event{% endif %} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:460px;">
+  <div class="page-header"><div class="page-title">{% if event %}Edit Event{% else %}New Event{% endif %}</div></div>
+  <form method="post" class="stack">
+    {% csrf_token %}
+    <div class="field"><label class="field-label">Title</label>{{ form.title }}</div>
+    <div class="field-row">
+      <div class="field"><label class="field-label">Start</label>{{ form.start }}</div>
+      <div class="field"><label class="field-label">End</label>{{ form.end }}</div>
+    </div>
+    <label class="flex items-center gap-2 text-sm">{{ form.all_day }} All day</label>
+    <div class="field-row">
+      <div class="field"><label class="field-label">Category</label>{{ form.category }}</div>
+      <div class="field"><label class="field-label">Location</label>{{ form.location }}</div>
+    </div>
+    <details class="form-advanced" {% if prefill_context or event %}open{% endif %}>
+      <summary>More options</summary>
+      <div class="form-advanced-body">
+        <div class="field-row">
+          <div class="field"><label class="field-label">Project</label>{{ form.project }}</div>
+          <div class="field"><label class="field-label">Course</label>{{ form.course }}</div>
+        </div>
+        <div class="field"><label class="field-label">Person</label>{{ form.person }}</div>
+        <div class="field"><label class="field-label">Description</label>{{ form.description }}</div>
+      </div>
+    </details>
+    <button type="submit" class="btn btn-primary btn-block" style="margin-top:var(--space-4);">{% if event %}Save Changes{% else %}Save Event{% endif %}</button>
+  </form>
+  {% if event %}
+    <form method="post" action="{% url 'calendar_app:event_delete' event.pk %}" onsubmit="return confirm('Delete this event?');" style="margin-top:var(--space-3);">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost btn-block text-danger">Delete Event</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

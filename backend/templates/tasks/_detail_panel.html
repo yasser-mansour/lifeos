@@ -1,0 +1,90 @@
+{% load icons lifeos_extras %}
+<div class="flex items-start justify-between" style="margin-bottom:var(--space-4);">
+  <div>
+    <div class="text-lg weight-semibold">{{ task.title }}</div>
+    <div class="text-sm text-secondary" style="margin-top:2px;">
+      {{ task.get_status_display }} · {{ task.get_priority_display }} priority
+    </div>
+  </div>
+  <form method="post" action="{% url 'tasks:complete' task.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="/tasks/">
+    <button type="submit" class="btn btn-sm {% if task.status == 'done' %}btn-secondary{% else %}btn-primary{% endif %}">
+      {% if task.status == 'done' %}Reopen{% else %}{% icon "check" size=13 %} Complete{% endif %}
+    </button>
+  </form>
+</div>
+
+<div class="stack-sm" style="margin-bottom:var(--space-5);">
+  {% if task.due_date %}<div class="flex justify-between text-sm"><span class="text-muted">Due</span><span>{{ task.due_date }}{% if task.due_time %} at {{ task.due_time }}{% endif %}</span></div>{% endif %}
+  {% if task.project %}<div class="flex justify-between text-sm"><span class="text-muted">Project</span><a href="{{ task.project.get_absolute_url }}">{{ task.project.name }}</a></div>{% endif %}
+  {% if task.course %}<div class="flex justify-between text-sm"><span class="text-muted">Course</span><a href="{{ task.course.get_absolute_url }}">{{ task.course.name }}</a></div>{% endif %}
+  {% if task.person %}<div class="flex justify-between text-sm"><span class="text-muted">Person</span><span>{{ task.person.name }}</span></div>{% endif %}
+  {% if task.estimated_minutes %}<div class="flex justify-between text-sm"><span class="text-muted">Estimated</span><span>{{ task.estimated_minutes }} min</span></div>{% endif %}
+</div>
+
+{% if task.description %}
+  <div class="section"><div class="eyebrow" style="margin-bottom:4px;">Description</div><div class="text-sm text-secondary" style="white-space:pre-wrap;">{{ task.description }}</div></div>
+{% endif %}
+
+<div class="section">
+  <div class="flex items-center justify-between" style="margin-bottom:var(--space-2);">
+    <div class="eyebrow">Notes</div>
+    <a href="{% url 'notes:new' %}?task={{ task.pk }}" class="text-xs text-muted">+ New Note</a>
+  </div>
+  {% if task.linked_notes.all %}
+    <div class="list">
+      {% for note in task.linked_notes.all %}
+        <a href="{{ note.get_absolute_url }}" class="list-row"><div class="list-row-title text-sm">{{ note.title|default:"Untitled note" }}</div></a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-sm text-muted">No notes yet.</div>
+  {% endif %}
+</div>
+
+<details class="form-advanced" style="margin-bottom:var(--space-4);">
+  <summary>Edit</summary>
+  <form method="post" action="{% url 'tasks:update' task.pk %}" class="stack drawer-form form-advanced-body">
+    {% csrf_token %}
+    <div class="field"><label class="field-label">Title</label>{{ edit_form.title }}</div>
+    <div class="field-row">
+      <div class="field"><label class="field-label">Priority</label>{{ edit_form.priority }}</div>
+      <div class="field"><label class="field-label">Due date</label>{{ edit_form.due_date }}</div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label class="field-label">Project</label>{{ edit_form.project }}</div>
+      <div class="field"><label class="field-label">Course</label>{{ edit_form.course }}</div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label class="field-label">Person</label>{{ edit_form.person }}</div>
+      <div class="field"><label class="field-label">Est. minutes</label>{{ edit_form.estimated_minutes }}</div>
+    </div>
+    <div class="field"><label class="field-label">Description</label>{{ edit_form.description }}</div>
+    <div class="field"><label class="field-label">Tags</label>{{ edit_form.tags }}</div>
+    <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start;">Save Changes</button>
+  </form>
+</details>
+
+<div class="section">
+  <div class="flex items-center justify-between" style="margin-bottom:var(--space-2);">
+    <div class="eyebrow">Focus</div>
+    <a href="{% url 'study:start' %}?{% if task.course %}domain=school&course={{ task.course.pk }}&{% elif task.project %}domain={{ task.project.area }}&project={{ task.project.pk }}&{% endif %}task={{ task.pk }}" class="btn btn-secondary btn-sm">{% icon "play" size=12 %} Start Focus</a>
+  </div>
+  <div class="flex justify-between text-sm" style="margin-bottom:2px;"><span class="text-muted">Total focus time</span><span class="mono">{{ total_seconds|duration_compact }}</span></div>
+  <div class="flex justify-between text-sm"><span class="text-muted">Sessions</span><span class="mono">{{ session_count }}</span></div>
+</div>
+
+<div class="section">
+  <div class="eyebrow" style="margin-bottom:var(--space-2);">Waiting for</div>
+  <form method="post" action="{% url 'tasks:detail_panel' task.pk %}" class="stack-sm drawer-form">
+    {% csrf_token %}
+    <div class="field-row">
+      <div class="field"><label class="field-label">Person (optional)</label>{{ waiting_form.waiting_for_person }}</div>
+      <div class="field"><label class="field-label">Follow up</label>{{ waiting_form.follow_up_date }}</div>
+    </div>
+    <div class="field"><label class="field-label">What for</label>{{ waiting_form.waiting_on }}</div>
+    <div class="field"><label class="field-label">Notes</label>{{ waiting_form.notes }}</div>
+    <button type="submit" class="btn btn-secondary btn-sm" style="align-self:flex-start;">Mark Waiting</button>
+  </form>
+</div>

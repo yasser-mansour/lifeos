@@ -1,0 +1,57 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Journal — LIFEOS{% endblock %}
+{% block extra_head %}
+<style>
+  .journal-page { max-width: 640px; margin: 0 auto; padding: var(--space-10) var(--space-6) var(--space-16); }
+  .journal-heading { font-size: var(--text-xl); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-8); }
+  .journal-compose {
+    display: block; font-size: var(--text-lg); color: var(--text-muted);
+    padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: var(--space-10); transition: color var(--motion-micro) var(--motion-ease);
+  }
+  .journal-compose:hover { color: var(--text-primary); }
+  .journal-search {
+    border: none; background: transparent; width: 100%; font-size: var(--text-sm);
+    color: var(--text-secondary); padding: 0 0 var(--space-8); border-bottom: none;
+  }
+  .journal-search:focus { outline: none; }
+  .journal-search::placeholder { color: var(--text-muted); }
+  .journal-day { margin-bottom: var(--space-10); }
+  .journal-day-label { font-size: var(--text-xs); color: var(--text-muted); letter-spacing: 0.02em; margin-bottom: var(--space-3); }
+  .journal-entry { display: block; text-decoration: none; color: inherit; padding-bottom: var(--space-6); margin-bottom: var(--space-6); border-bottom: 1px solid var(--border-subtle); }
+  .journal-entry:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .journal-entry-title { font-size: var(--text-lg); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1); }
+  .journal-entry-excerpt { font-size: var(--text-base); line-height: 1.7; color: var(--text-secondary); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="journal-page">
+  <div class="journal-heading">Journal</div>
+
+  <a href="{% url 'journal:new' %}" class="journal-compose">Write…</a>
+
+  <form method="get">
+    <input class="journal-search" type="text" name="q" value="{{ query }}" placeholder="Search entries…">
+  </form>
+
+  {% if entries %}
+    {% regroup entries by date as entries_by_date %}
+    {% for group in entries_by_date %}
+      <div class="journal-day">
+        <div class="journal-day-label">{{ group.grouper|date:"l, F j" }}</div>
+        {% for entry in group.list %}
+          <a href="{{ entry.get_absolute_url }}" class="journal-entry">
+            <div class="journal-entry-title">{{ entry.title|default:"Untitled" }}</div>
+            <div class="journal-entry-excerpt">{{ entry.body|truncatewords:28|default:"Empty entry" }}</div>
+          </a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="text-sm text-muted" style="padding:var(--space-6) 0;">
+      {% if query %}Nothing matches "{{ query }}".{% else %}Nothing written yet.{% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

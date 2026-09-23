@@ -1,0 +1,24 @@
+{% extends "layout/app_shell.html" %}
+{% load lifeos_extras %}
+{% block title %}Study Goals — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:460px;">
+  <div class="page-header"><div class="page-title">Study Goals</div></div>
+
+  <div class="stack" style="margin-bottom:var(--space-8);">
+    {% for period, goal in goals.items %}
+      <div class="flex justify-between items-center">
+        <span class="text-sm text-secondary" style="text-transform:capitalize;">{{ period }}</span>
+        <span class="mono text-md weight-medium">{% if goal %}{{ goal.target_seconds|duration_compact }}{% else %}Not set{% endif %}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <form method="post" class="stack">
+    {% csrf_token %}
+    <div class="field"><label class="field-label">Period</label>{{ goal_forms.period }}</div>
+    <div class="field"><label class="field-label">Target (hours)</label>{{ goal_forms.target_hours }}</div>
+    <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Set Goal</button>
+  </form>
+</div>
+{% endblock %}

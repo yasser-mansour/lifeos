@@ -1,0 +1,57 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}{{ entry.title|default:"Journal" }} — LIFEOS{% endblock %}
+{% block extra_head %}
+<style>
+  .journal-editor { max-width: 640px; margin: 0 auto; padding: var(--space-10) var(--space-6) var(--space-16); }
+  .journal-title-input { border:none; background:transparent; font-size:var(--text-2xl); font-weight:650; width:100%; padding:0; margin-bottom:var(--space-2); }
+  .journal-title-input:focus { outline:none; }
+  .journal-body-input { border:none; background:transparent; width:100%; min-height:60vh; resize:none; font-size:var(--text-lg); line-height:1.75; padding:0; }
+  .journal-body-input:focus { outline:none; box-shadow:none; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="journal-editor">
+  <div class="flex items-center justify-between" style="margin-bottom:var(--space-6);">
+    <a href="{{ back_url }}" data-back-link class="text-sm text-muted">← {{ back_label }}</a>
+    <span id="autosave-status" class="text-xs text-muted">Saved</span>
+  </div>
+
+  <form id="journal-form" onsubmit="return false;">
+    {% csrf_token %}
+    <div class="flex items-center gap-3" style="margin-bottom:var(--space-4);">
+      {{ form.date }}
+      {{ form.mood }}
+    </div>
+    {{ form.title }}
+    {{ form.body }}
+    <details class="form-advanced" style="margin-top:var(--space-4);">
+      <summary>Tag with project or goal</summary>
+      <div class="form-advanced-body flex gap-3">
+        <div class="field"><label class="field-label">Project</label>{{ form.project }}</div>
+        <div class="field"><label class="field-label">Goal</label>{{ form.goal }}</div>
+      </div>
+    </details>
+  </form>
+
+  <form method="post" action="{% url 'journal:delete' entry.pk %}" onsubmit="return confirm('Delete this entry?');" style="margin-top:var(--space-8);">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-ghost btn-sm text-danger">{% icon "trash" size=13 %} Delete entry</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  document.getElementById("id_title").classList.add("journal-title-input");
+  document.getElementById("id_title").setAttribute("placeholder", "Untitled");
+  document.getElementById("id_body").classList.add("journal-body-input");
+  document.getElementById("id_body").setAttribute("placeholder", "Start writing…");
+
+  const form = document.getElementById("journal-form");
+  const status = document.getElementById("autosave-status");
+  LifeOS.autosave(form, status, "{% url 'journal:autosave' entry.pk %}");
+})();
+</script>
+{% endblock %}

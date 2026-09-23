@@ -1,0 +1,9 @@
+# Extra dependencies for the Windows desktop wrapper only (desktop/windows/
+# lifeos_windows.py) — never needed by the backend itself, by macOS (which
+# uses the native Swift/WKWebView wrapper instead), or by normal Django
+# development on any platform. Installed on top of requirements.txt when
+# building the Windows package (see packaging/windows/build_release.ps1 and
+# .github/workflows/release.yml).
+-r requirements.txt
+pywebview==5.4
+pythonnet==3.0.5

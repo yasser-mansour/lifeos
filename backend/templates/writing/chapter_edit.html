@@ -1,0 +1,79 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}{{ chapter.title }} — LIFEOS{% endblock %}
+{% block extra_head %}
+<style>
+  .writer-shell { display:flex; height:100%; }
+  .writer-nav { width:220px; flex-shrink:0; border-right:1px solid var(--border-subtle); padding:var(--space-4); overflow-y:auto; }
+  .writer-main { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .writer-topbar { display:flex; align-items:center; justify-content:space-between; padding:var(--space-3) var(--space-6); border-bottom:1px solid var(--border-subtle); flex-shrink:0; }
+  .writer-editor-wrap { flex:1; overflow-y:auto; }
+  .writer-title-input { border:none; background:transparent; font-size:var(--text-2xl); font-weight:650; width:100%; padding:0; margin-bottom:var(--space-4); }
+  .writer-title-input:focus { outline:none; }
+  .writer-body-input { border:none; background:transparent; width:100%; min-height:70vh; resize:none; font-size:var(--text-lg); line-height:1.8; padding:0; }
+  .writer-body-input:focus { outline:none; box-shadow:none; }
+  .writer-page { max-width:680px; margin:0 auto; padding:var(--space-8) var(--space-6) var(--space-16); }
+  body.distraction-free .sidebar, body.distraction-free .writer-nav, body.distraction-free .writer-topbar { display:none; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="writer-shell">
+  <div class="writer-nav">
+    <a href="{{ book.get_absolute_url }}" class="text-xs text-muted">{% icon "chevron-left" size=12 %} {{ book.title }}</a>
+    <div class="stack-sm" style="margin-top:var(--space-4);">
+      {% for c in chapters %}
+        <a href="{{ c.get_absolute_url }}" class="sidebar-item {% if c.pk == chapter.pk %}active{% endif %}" style="display:block;">{{ c.title }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="writer-main">
+    <div class="writer-topbar">
+      <span id="autosave-status" class="text-xs text-muted">Saved</span>
+      <div class="flex items-center gap-3">
+        <span id="word-count" class="text-xs text-muted mono">{{ chapter.word_count }} words</span>
+        <button id="distraction-toggle" class="btn btn-ghost btn-sm">Distraction-free</button>
+      </div>
+    </div>
+    <div class="writer-editor-wrap">
+      <div class="writer-page">
+        <form id="chapter-form" onsubmit="return false;">
+          {% csrf_token %}
+          {{ form.title }}
+          {{ form.content }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  document.getElementById("id_title").classList.add("writer-title-input");
+  document.getElementById("id_content").classList.add("writer-body-input");
+  document.getElementById("id_content").setAttribute("placeholder", "Start writing…");
+
+  const form = document.getElementById("chapter-form");
+  const status = document.getElementById("autosave-status");
+  const wordCount = document.getElementById("word-count");
+  const contentField = document.getElementById("id_content");
+
+  function updateWordCount() {
+    const words = contentField.value.trim().split(/\s+/).filter(Boolean).length;
+    wordCount.textContent = words + " words";
+  }
+  contentField.addEventListener("input", updateWordCount);
+
+  LifeOS.autosave(form, status, "{% url 'writing:chapter_autosave' chapter.pk %}");
+
+  document.getElementById("distraction-toggle").addEventListener("click", () => {
+    document.body.classList.toggle("distraction-free");
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") document.body.classList.remove("distraction-free");
+  });
+})();
+</script>
+{% endblock %}

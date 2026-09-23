@@ -1,0 +1,54 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Focus — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div><div class="page-title">Focus</div></div>
+    <div class="page-actions">
+      <a href="{% url 'focus:start' %}" class="btn btn-primary">{% icon "play" size=14 %} Start Focus</a>
+    </div>
+  </div>
+
+  <div class="eyebrow" style="margin-bottom:var(--space-2);">Today</div>
+  <div class="text-4xl weight-semibold mono" style="margin-bottom:var(--space-5);">{{ breakdown.total_seconds|duration_compact }}</div>
+
+  <div class="stack-sm" style="max-width:320px; margin-bottom:var(--space-8);">
+    {% if breakdown.school_seconds %}<div class="flex justify-between text-sm"><span class="text-secondary">School</span><span class="mono">{{ breakdown.school_seconds|duration_compact }}</span></div>{% endif %}
+    {% if breakdown.project_seconds %}<div class="flex justify-between text-sm"><span class="text-secondary">Projects</span><span class="mono">{{ breakdown.project_seconds|duration_compact }}</span></div>{% endif %}
+    {% if breakdown.writing_seconds %}<div class="flex justify-between text-sm"><span class="text-secondary">Writing</span><span class="mono">{{ breakdown.writing_seconds|duration_compact }}</span></div>{% endif %}
+    {% if breakdown.personal_seconds %}<div class="flex justify-between text-sm"><span class="text-secondary">Personal</span><span class="mono">{{ breakdown.personal_seconds|duration_compact }}</span></div>{% endif %}
+    {% if breakdown.other_seconds %}<div class="flex justify-between text-sm"><span class="text-secondary">Other</span><span class="mono">{{ breakdown.other_seconds|duration_compact }}</span></div>{% endif %}
+    {% if not breakdown.total_seconds %}<div class="text-sm text-muted">Nothing focused on yet today.</div>{% endif %}
+  </div>
+
+  <div class="section-header">
+    <div class="eyebrow">Recent</div>
+    <a href="{% url 'focus:history' %}" class="text-xs text-muted">All history</a>
+  </div>
+  {% if recent %}
+    <div class="list" style="margin-bottom:var(--space-8);">
+      {% for session in recent %}
+        <a href="{{ session.get_absolute_url }}" class="list-row">
+          <div class="list-row-main">
+            <div class="list-row-title text-sm">{{ session.focus_title }}</div>
+            <div class="list-row-meta">{{ session.focus_subtitle }}</div>
+          </div>
+          <span class="mono text-sm">{{ session.duration_seconds|duration_compact }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state" style="padding:var(--space-8) var(--space-6); margin-bottom:var(--space-8);">
+      <div class="empty-state-icon">{% icon "play" size=18 %}</div>
+      <div class="empty-state-title">No sessions yet</div>
+      <div class="empty-state-body">Your focus history will appear here.</div>
+      <a href="{% url 'focus:start' %}" class="btn btn-primary btn-sm">Start Focus</a>
+    </div>
+  {% endif %}
+
+  {% if needs_classification_count %}
+    <a href="{% url 'focus:needs_classification' %}" class="text-xs text-muted">{{ needs_classification_count }} legacy session{{ needs_classification_count|pluralize }} need{{ needs_classification_count|pluralize:"s," }} classification</a>
+  {% endif %}
+</div>
+{% endblock %}

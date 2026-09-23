@@ -1,0 +1,99 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Tasks — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div><div class="page-title">Tasks</div></div>
+    <div class="page-actions">
+      <button class="btn btn-primary" data-open-overlay="new-task">{% icon "plus" size=14 %} New Task</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <a href="?view=today" class="tab {% if view == 'today' %}active{% endif %}">Today<span class="text-muted"> {{ counts.today }}</span></a>
+    <a href="?view=upcoming" class="tab {% if view == 'upcoming' %}active{% endif %}">Upcoming<span class="text-muted"> {{ counts.upcoming }}</span></a>
+    <a href="?view=overdue" class="tab {% if view == 'overdue' %}active{% endif %}">Overdue<span class="text-muted"> {{ counts.overdue }}</span></a>
+    <a href="?view=inbox" class="tab {% if view == 'inbox' %}active{% endif %}">Inbox<span class="text-muted"> {{ counts.inbox }}</span></a>
+    <a href="?view=waiting" class="tab {% if view == 'waiting' %}active{% endif %}">Waiting<span class="text-muted"> {{ counts.waiting }}</span></a>
+    <a href="?view=all" class="tab {% if view == 'all' %}active{% endif %}">All<span class="text-muted"> {{ counts.all }}</span></a>
+    <a href="?view=completed" class="tab {% if view == 'completed' %}active{% endif %}">Completed</a>
+  </div>
+
+  {% if tasks %}
+    <div class="list">
+      {% for task in tasks %}
+        <div class="list-row">
+          <form method="post" action="{% url 'tasks:complete' task.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="checkbox-circle {% if task.status == 'done' %}checked{% endif %}" aria-label="Toggle complete"></button>
+          </form>
+          <a href="#" data-drawer-url="{% url 'tasks:detail_panel' task.pk %}" class="list-row-main">
+            <div class="list-row-title" style="{% if task.status == 'done' %}text-decoration:line-through; color:var(--text-muted);{% endif %}">{{ task.title }}</div>
+            <div class="list-row-meta">
+              {% if task.project %}{{ task.project.name }}{% elif task.course %}{{ task.course.name }}{% endif %}
+              {% if task.due_date %}<span>· {{ task.due_date }}{% if task.is_overdue %} <span class="text-danger">overdue</span>{% endif %}</span>{% endif %}
+              {% if task.priority == 'high' or task.priority == 'urgent' %}<span class="badge {% if task.priority == 'urgent' %}badge-danger{% else %}badge-warning{% endif %}">{{ task.get_priority_display }}</span>{% endif %}
+              {% if task.status == 'waiting' %}
+                <span class="badge badge-neutral">
+                  {% if task.waiting_for_person and task.waiting_on %}Waiting on {{ task.waiting_for_person.name }} — {{ task.waiting_on }}
+                  {% elif task.waiting_for_person %}Waiting on {{ task.waiting_for_person.name }}
+                  {% elif task.waiting_on %}Waiting on {{ task.waiting_on }}
+                  {% else %}Waiting
+                  {% endif %}
+                </span>
+              {% endif %}
+            </div>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "tasks" size=18 %}</div>
+      <div class="empty-state-title">Nothing here</div>
+      <div class="empty-state-body">
+        {% if view == 'today' %}Nothing due today. Enjoy the clear runway.{% else %}No tasks in this view yet.{% endif %}
+      </div>
+      <button class="btn btn-primary btn-sm" data-open-overlay="new-task">New Task</button>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal-backdrop{% if show_new %} open{% endif %}" id="new-task">
+  <div class="modal">
+    <div class="modal-header">New Task</div>
+    <form method="post" action="{% url 'tasks:create' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next_view" value="{{ view }}">
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Title</label>{{ form.title }}</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Priority</label>{{ form.priority }}</div>
+          <div class="field"><label class="field-label">Due date</label>{{ form.due_date }}</div>
+        </div>
+        <details class="form-advanced" {% if prefill_context %}open{% endif %}>
+          <summary>More options</summary>
+          <div class="form-advanced-body">
+            <div class="field-row">
+              <div class="field"><label class="field-label">Project</label>{{ form.project }}</div>
+              <div class="field"><label class="field-label">Course</label>{{ form.course }}</div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label class="field-label">Person</label>{{ form.person }}</div>
+              <div class="field"><label class="field-label">Est. minutes</label>{{ form.estimated_minutes }}</div>
+            </div>
+            <div class="field"><label class="field-label">Description</label>{{ form.description }}</div>
+            <div class="field"><label class="field-label">Tags</label>{{ form.tags }}</div>
+          </div>
+        </details>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-task">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Task</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

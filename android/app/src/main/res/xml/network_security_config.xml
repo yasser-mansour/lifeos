@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+LIFEOS only ever talks to the user's own Mac on the local network (LAN IP
+entered during pairing, or discovered via the pairing QR code) — there is no
+public/internet endpoint (see docs/SYNC.md). Cleartext HTTP is permitted
+deliberately for that LAN connection; the real security boundary is the
+per-device token issued at pairing time, not transport encryption.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

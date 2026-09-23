@@ -1,0 +1,37 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}{{ book.title }} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ book.title }}</div>
+      <div class="page-subtitle">{{ book.get_status_display }} · {{ book.total_word_count }} words</div>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'writing:chapter_create' book.pk %}" class="btn btn-primary">{% icon "plus" size=14 %} Add Chapter</a>
+    </div>
+  </div>
+
+  {% if chapters %}
+    <div class="list">
+      {% for chapter in chapters %}
+        <a href="{{ chapter.get_absolute_url }}" class="list-row">
+          <span class="text-muted mono text-xs" style="width:24px;">{{ forloop.counter }}</span>
+          <div class="list-row-main">
+            <div class="list-row-title">{{ chapter.title }}</div>
+            <div class="list-row-meta">{{ chapter.word_count }} words · {{ chapter.get_status_display }}</div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "book" size=18 %}</div>
+      <div class="empty-state-title">No chapters yet</div>
+      <div class="empty-state-body">Break {{ book.title }} into chapters to start drafting.</div>
+      <a href="{% url 'writing:chapter_create' book.pk %}" class="btn btn-primary btn-sm">Add Chapter</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

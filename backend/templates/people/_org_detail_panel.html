@@ -1,0 +1,105 @@
+{% load icons lifeos_extras %}
+<div class="flex items-center gap-3" style="margin-bottom:var(--space-2);">
+  <span class="avatar avatar-lg avatar-square">{% icon "briefcase" size=18 %}</span>
+  <div>
+    <div class="text-lg weight-semibold">{{ org.name }}</div>
+    <div class="text-sm text-secondary">Organization · {{ org.get_category_display }}{% if org.archived %} · Archived{% endif %}</div>
+  </div>
+</div>
+
+<div class="flex gap-2" style="flex-wrap:wrap; margin-bottom:var(--space-5);">
+  {% for label in org.relationship_labels %}<span class="badge badge-accent">{{ label }}</span>{% endfor %}
+</div>
+
+<div class="stack-sm" style="margin-bottom:var(--space-6);">
+  {% if org.website %}<div class="flex items-center gap-2 text-sm"><span class="text-muted">Website</span><a href="{{ org.website }}" target="_blank" rel="noopener">{{ org.website }}</a></div>{% endif %}
+  {% if org.email %}<div class="flex items-center gap-2 text-sm"><span class="text-muted">Email</span><span>{{ org.email }}</span></div>{% endif %}
+  {% if org.phone %}<div class="flex items-center gap-2 text-sm"><span class="text-muted">Phone</span><span>{{ org.phone }}</span></div>{% endif %}
+</div>
+
+<div class="section">
+  <div class="flex items-center justify-between" style="margin-bottom:var(--space-2);">
+    <div class="eyebrow">Financial activity</div>
+    <a href="{% url 'finance:transaction_new' %}?organization={{ org.pk }}" class="text-xs text-muted">+ Add Payment</a>
+  </div>
+  {% if financial.transaction_count %}
+    <div class="flex justify-between text-sm" style="margin-bottom:4px;"><span class="text-secondary">Received</span><span class="mono weight-medium text-success">{{ financial.total_received|money }}</span></div>
+    <div class="flex justify-between text-sm" style="margin-bottom:4px;"><span class="text-secondary">Sent</span><span class="mono weight-medium">{{ financial.total_sent|money }}</span></div>
+    <div class="flex justify-between text-sm weight-semibold" style="margin-bottom:var(--space-2);">
+      <span>Net</span><span class="mono {% if financial.net >= 0 %}text-success{% else %}text-danger{% endif %}">{{ financial.net|money }}</span>
+    </div>
+    <div class="text-xs text-muted" style="margin-top:var(--space-2);">{{ financial.transaction_count }} transaction{{ financial.transaction_count|pluralize }}</div>
+    <div class="list" style="margin-top:var(--space-3);">
+      {% for txn in financial.recent_transactions|slice:":6" %}
+        <a href="{% url 'finance:transaction_edit' txn.pk %}" class="list-row">
+          <div class="list-row-main"><div class="list-row-title text-sm">{{ txn.description|default:txn.get_type_display }}</div><div class="list-row-meta">{{ txn.date|date:"M j" }}</div></div>
+          <div class="mono text-sm {% if txn.signed_amount >= 0 %}text-success{% endif %}">{{ txn.signed_amount|money }}</div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-sm text-muted">No financial activity yet.</div>
+  {% endif %}
+</div>
+
+<div class="section">
+  <div class="eyebrow" style="margin-bottom:var(--space-2);">Projects</div>
+  <form method="post" action="{% url 'people:org_link_project' org.pk %}" class="flex gap-2" style="margin-bottom:var(--space-3);">
+    {% csrf_token %}
+    <select name="project_id" class="select" style="flex:1;" required>
+      <option value="">Link a project…</option>
+      {% for project in available_projects %}<option value="{{ project.pk }}">{{ project.name }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary btn-sm">Link</button>
+  </form>
+  {% if projects %}
+    <div class="list">
+      {% for project in projects %}
+        <div class="list-row">
+          <a href="{{ project.get_absolute_url }}" class="list-row-main"><div class="list-row-title text-sm">{{ project.name }}</div></a>
+          <form method="post" action="{% url 'people:org_unlink_project' org.pk project.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-sm text-danger">Unlink</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-sm text-muted">No linked projects.</div>
+  {% endif %}
+</div>
+
+{% if org.notes %}
+<div class="section">
+  <div class="eyebrow" style="margin-bottom:var(--space-2);">Notes</div>
+  <div class="text-sm text-secondary" style="white-space:pre-wrap;">{{ org.notes }}</div>
+</div>
+{% endif %}
+
+<details class="form-advanced" style="margin-bottom:var(--space-4);">
+  <summary>Edit</summary>
+  <form method="post" action="{% url 'people:org_update' org.pk %}" class="stack drawer-form form-advanced-body">
+    {% csrf_token %}
+    <div class="field"><label class="field-label">Name</label>{{ edit_form.name }}</div>
+    <div class="field"><label class="field-label">Category</label>{{ edit_form.category }}</div>
+    <div class="field-row">
+      <div class="field"><label class="field-label">Email</label>{{ edit_form.email }}</div>
+      <div class="field"><label class="field-label">Phone</label>{{ edit_form.phone }}</div>
+    </div>
+    <div class="field"><label class="field-label">Website</label>{{ edit_form.website }}</div>
+    <div class="field"><label class="field-label">Relationship</label>{{ edit_form.relationship_types }}</div>
+    <div class="field"><label class="field-label">Notes</label>{{ edit_form.notes }}</div>
+    <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start;">Save Changes</button>
+  </form>
+</details>
+
+<div class="flex gap-2">
+  <form method="post" action="{% url 'people:org_archive_toggle' org.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-ghost btn-sm">{% if org.archived %}Restore{% else %}Archive{% endif %}</button>
+  </form>
+  <form method="post" action="{% url 'people:org_delete' org.pk %}" onsubmit="return confirm('Remove {{ org.name }}? Its transaction history stays intact.');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-ghost btn-sm text-danger">{% icon "trash" size=13 %} Remove</button>
+  </form>
+</div>

@@ -1,0 +1,33 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}All Activity — Finance — LIFEOS{% endblock %}
+{% block content %}
+<div class="page page-wide">
+  <div class="page-header">
+    <div>
+      <div class="page-title">All Activity</div>
+      <div class="page-subtitle"><a href="{% url 'finance:overview' %}">Finance</a> · everything, in one timeline · combined balance <span class="mono">{{ combined_total|money }}</span></div>
+    </div>
+  </div>
+
+  {% regroup events by date as day_groups %}
+  {% if day_groups %}
+    {% for day in day_groups %}
+      <div class="section">
+        <div class="section-header"><div class="eyebrow">{{ day.grouper|date:"l, F j" }}</div></div>
+        <div class="list">
+          {% for event in day.list %}
+            {% include "finance/_activity_row.html" with event=event show_account=True %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "finance" size=18 %}</div>
+      <div class="empty-state-title">No activity yet</div>
+      <div class="empty-state-body">Every transaction and transfer, across every account, will show up here.</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

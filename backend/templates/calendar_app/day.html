@@ -1,0 +1,22 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Today — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header"><div class="page-title">{{ day|date:"l, F j" }}</div>
+    <div class="page-actions"><a href="{% url 'calendar_app:month' %}" class="btn btn-ghost">Month</a></div>
+  </div>
+  {% if events %}
+    <div class="list">
+      {% for event in events %}
+        <div class="list-row">
+          <span class="timeline-time">{% if not event.all_day %}{{ event.start|time:"H:i" }}{% endif %}</span>
+          <div class="list-row-main"><div class="list-row-title text-sm">{{ event.title }}</div></div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state"><div class="empty-state-body">Nothing scheduled today.</div></div>
+  {% endif %}
+</div>
+{% endblock %}

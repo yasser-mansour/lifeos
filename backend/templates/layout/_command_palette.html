@@ -1,0 +1,25 @@
+{% load icons %}
+<div class="palette-backdrop" id="command-palette">
+  <div class="palette">
+    <input class="palette-input" type="text" placeholder="Search LIFEOS, or type a command…" autocomplete="off" spellcheck="false">
+    <div class="palette-results"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="quick-add">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header">Quick Add</div>
+    <div class="modal-body">
+      <div class="stack-sm">
+        <a href="{% url 'tasks:list' %}?new=1" class="palette-item">{% icon "tasks" %}<span>Task</span></a>
+        <a href="{% url 'finance:transaction_new' %}" class="palette-item">{% icon "finance" %}<span>Transaction</span></a>
+        <a href="{% url 'focus:start' %}" class="palette-item">{% icon "play" %}<span>Focus</span></a>
+        <a href="{% url 'calendar_app:event_new' %}" class="palette-item">{% icon "calendar" %}<span>Event</span></a>
+        <a href="{% url 'projects:list' %}?new=1" class="palette-item">{% icon "projects" %}<span>Project</span></a>
+        <a href="{% url 'journal:new' %}" class="palette-item">{% icon "journal" %}<span>Journal entry</span></a>
+        <a href="{% url 'notes:new' %}" class="palette-item">{% icon "notes" %}<span>Note</span></a>
+        <a href="{% url 'inbox:list' %}?new=1" class="palette-item">{% icon "inbox" %}<span>Inbox capture</span></a>
+      </div>
+    </div>
+  </div>
+</div>

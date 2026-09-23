@@ -1,0 +1,20 @@
+{% load icons %}
+{% if waiting_items %}
+  <div class="list">
+    {% for item in waiting_items %}
+      <div class="list-row">
+        <div class="list-row-main">
+          <div class="list-row-title">{{ item.title }}</div>
+          <div class="list-row-meta">Waiting on {{ item.waiting_on }}</div>
+        </div>
+        {% if item.is_overdue %}<span class="badge badge-warning">Follow up overdue</span>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state" style="padding:var(--space-6);">
+    <div class="empty-state-icon">{% icon "clock" size=18 %}</div>
+    <div class="empty-state-title">Nothing pending</div>
+    <div class="empty-state-body">Tasks you're waiting on someone else for will show up here.</div>
+  </div>
+{% endif %}

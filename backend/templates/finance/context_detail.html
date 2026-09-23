@@ -1,0 +1,93 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}{{ context_label }} — Finance — LIFEOS{% endblock %}
+{% block content %}
+<div class="page page-wide">
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ context_label }}</div>
+      <div class="page-subtitle"><a href="{% url 'finance:overview' %}">Finance</a> · all {{ context_label|lower }} accounts combined</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" data-open-overlay="new-account">{% icon "plus" size=14 %} Add Account</button>
+    </div>
+  </div>
+
+  <div class="text-4xl weight-semibold mono" style="margin-bottom:var(--space-2);">{{ overview.total_balance|money }}</div>
+  {% if by_type %}
+    <div class="flex gap-6" style="margin-bottom:var(--space-6);">
+      {% for row in by_type %}
+        <div><span class="text-xs text-muted">{{ row.label }}</span> <span class="text-sm weight-medium mono">{{ row.total|money }}</span></div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="section">
+    <div class="section-header"><div class="eyebrow">Accounts</div></div>
+    {% if overview.accounts %}
+      <div class="list">
+        {% for row in overview.accounts %}
+          <a href="{{ row.account.get_absolute_url }}" class="list-row">
+            <div class="list-row-main">
+              <div class="list-row-title text-sm">{{ row.account.name }}</div>
+              <div class="list-row-meta">{{ row.account.get_account_type_display }}{% if row.account.institution %} · {{ row.account.institution }}{% endif %}</div>
+            </div>
+            <span class="mono text-sm weight-medium">{{ row.balance|money:row.account.currency }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">{% icon "wallet" size=18 %}</div>
+        <div class="empty-state-title">No {{ context_label|lower }} accounts yet</div>
+        <div class="empty-state-body">Add as many {{ context_label|lower }} accounts as you need — each keeps its own balance and transactions.</div>
+        <button class="btn btn-primary btn-sm" data-open-overlay="new-account">Add Account</button>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="flex gap-6" style="margin:var(--space-6) 0;">
+    <div><div class="text-xs text-muted">This month · income</div><div class="text-lg weight-semibold mono text-success">{{ overview.month_income|money }}</div></div>
+    <div><div class="text-xs text-muted">This month · expenses</div><div class="text-lg weight-semibold mono">{{ overview.month_expenses|money }}</div></div>
+    <div><div class="text-xs text-muted">This month · net</div><div class="text-lg weight-semibold mono">{{ overview.month_net|money }}</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="eyebrow">All {{ context_label|lower }} activity</div></div>
+    {% if events %}
+      <div class="list">
+        {% for event in events %}
+          {% include "finance/_activity_row.html" with event=event show_account=True %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-sm text-muted">No activity in any {{ context_label|lower }} account yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal-backdrop{% if show_new_account %} open{% endif %}" id="new-account">
+  <div class="modal">
+    <div class="modal-header">Add {{ context_label }} Account</div>
+    <form method="post" action="{% url 'finance:account_create' %}">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ account_form.name }}</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Type</label>{{ account_form.account_type }}</div>
+          <div class="field"><label class="field-label">Context</label>{{ account_form.context }}</div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Institution</label>{{ account_form.institution }}</div>
+          <div class="field"><label class="field-label">Currency</label>{{ account_form.currency }}</div>
+        </div>
+        <div class="field"><label class="field-label">Opening balance</label>{{ account_form.opening_balance }}</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-account">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Account</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

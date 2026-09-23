@@ -1,0 +1,45 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Devices — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div><div class="page-title">Connected Devices</div></div>
+    <div class="page-actions"><a href="{% url 'devices:pair' %}" class="btn btn-primary">{% icon "qr" size=14 %} Pair New Device</a></div>
+  </div>
+
+  {% if devices %}
+    <div class="list">
+      {% for device in devices %}
+        <div class="list-row">
+          <span class="dot {% if device.status == 'online' %}dot-success{% else %}dot-muted{% endif %}"></span>
+          <div class="list-row-main">
+            <div class="list-row-title">{{ device.name }}{% if device.device_type == 'primary' %} <span class="badge badge-neutral">Primary</span>{% endif %}</div>
+            <div class="list-row-meta">{{ device.get_platform_display }} · {{ device.get_status_display }} · Last sync: {{ device.last_sync|timesince|default:"never" }}{% if device.last_sync %} ago{% endif %}</div>
+          </div>
+          <div class="flex gap-1">
+            <form method="post" action="{% url 'devices:rename' device.pk %}" class="flex gap-1">
+              {% csrf_token %}
+              <input class="input" type="text" name="name" placeholder="Rename…" style="width:120px;" value="">
+              <button type="submit" class="btn btn-secondary btn-sm">{% icon "edit" size=12 %}</button>
+            </form>
+            {% if device.device_type != 'primary' %}
+              <form method="post" action="{% url 'devices:revoke' device.pk %}" onsubmit="return confirm('Revoke access for {{ device.name }}?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">Revoke</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "devices" size=18 %}</div>
+      <div class="empty-state-title">No devices paired yet</div>
+      <div class="empty-state-body">Pair your Android phone to sync tasks, study sessions and more.</div>
+      <a href="{% url 'devices:pair' %}" class="btn btn-primary btn-sm">Pair New Device</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

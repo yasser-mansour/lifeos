@@ -1,0 +1,82 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Study — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div><div class="page-title">Study</div></div>
+    <div class="page-actions">
+      <a href="{% url 'school:course_list' %}" class="btn btn-ghost">Courses</a>
+      <a href="{% url 'study:goals' %}" class="btn btn-ghost">Goals</a>
+      <a href="{% url 'study:statistics' %}" class="btn btn-ghost">Statistics</a>
+      <a href="{% url 'study:history' %}" class="btn btn-ghost">History</a>
+      <a href="{% url 'study:start' %}?domain=school" class="btn btn-primary">{% icon "play" size=14 %} Start Study</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="eyebrow" style="margin-bottom:var(--space-2);">Today</div>
+    <div class="flex items-end gap-2">
+      <span class="text-4xl weight-semibold mono">{{ today_seconds|duration_compact }}</span>
+      {% if goal_seconds %}<span class="text-secondary text-lg">/ {{ goal_seconds|duration_compact }}</span>{% endif %}
+    </div>
+    {% if goal_seconds %}
+      <div class="progress-track" style="max-width:320px; margin-top:var(--space-2);"><div class="progress-fill" style="width:{{ today_seconds|percent:goal_seconds }}%;"></div></div>
+    {% endif %}
+    {% if current_streak %}
+      <div class="flex items-center gap-1 text-sm text-secondary" style="margin-top:var(--space-3);">{% icon "streak" size=15 %} {{ current_streak }}-day streak</div>
+    {% endif %}
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="eyebrow">Today's sessions</div></div>
+    {% if sessions_today %}
+      <div class="list">
+        {% for session in sessions_today %}
+          <a href="{{ session.get_absolute_url }}" class="list-row">
+            <div class="list-row-main">
+              <div class="list-row-title text-sm">{{ session.focus_title }}{% if session.topic %} · {{ session.topic.name }}{% endif %}</div>
+              <div class="list-row-meta">{{ session.get_mode_display }}</div>
+            </div>
+            <span class="mono text-sm">{{ session.duration_seconds|duration_compact }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state" style="padding:var(--space-8);">
+        <div class="empty-state-icon">{% icon "study" size=18 %}</div>
+        <div class="empty-state-title">No study sessions yet</div>
+        <div class="empty-state-body">Start your first focus session — stopwatch, countdown, or Pomodoro.</div>
+        <a href="{% url 'study:start' %}?domain=school" class="btn btn-primary btn-sm">Start Study</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="section">
+    <div class="section-header"><div class="eyebrow">This week</div></div>
+    <div class="flex gap-2" style="align-items:flex-end; height:80px;">
+      {% for day in weekly_series %}
+        <div class="flex-col items-center gap-1" style="flex:1; height:100%; justify-content:flex-end;">
+          <div style="width:100%; border-radius:4px 4px 0 0; height:{{ day.seconds|percent:14400 }}%; min-height:2px; background:var(--accent);"></div>
+          <span class="text-xs text-muted">{{ day.date|date:"D"|slice:":1" }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if courses %}
+  <div class="section">
+    <div class="section-header"><div class="eyebrow">Courses</div><a href="{% url 'school:course_list' %}" class="text-xs text-muted">All courses</a></div>
+    <div class="list">
+      {% for row in courses %}
+        <a href="{{ row.course.get_absolute_url }}" class="list-row">
+          <span class="dot" style="width:8px;height:8px;border-radius:2px;background:{{ row.course.color }};"></span>
+          <div class="list-row-main"><div class="list-row-title text-sm">{{ row.course.name }}</div></div>
+          <span class="mono text-sm">{{ row.total_seconds|duration_compact }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}{{ project.name }} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page page-wide">
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ project.name }}</div>
+      <div class="page-subtitle">{{ project.get_status_display }} · {{ project.get_area_display }}</div>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'tasks:list' %}?project={{ project.pk }}&new=1" class="btn btn-secondary">{% icon "plus" size=14 %} Add Task</a>
+      <a href="{% url 'study:start' %}?domain={{ project.area }}&project={{ project.pk }}" class="btn btn-primary">{% icon "play" size=14 %} Start Focus</a>
+    </div>
+  </div>
+
+  <details class="form-advanced" style="margin-bottom:var(--space-6);">
+    <summary>Edit project</summary>
+    <form method="post" action="{% url 'projects:update' project.pk %}" class="stack form-advanced-body">
+      {% csrf_token %}
+      <div class="field"><label class="field-label">Name</label>{{ edit_form.name }}</div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Area</label>{{ edit_form.area }}</div>
+        <div class="field"><label class="field-label">Status</label>{{ edit_form.status }}</div>
+        <div class="field"><label class="field-label">Priority</label>{{ edit_form.priority }}</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Start date</label>{{ edit_form.start_date }}</div>
+        <div class="field"><label class="field-label">Target date</label>{{ edit_form.target_date }}</div>
+      </div>
+      <div class="field"><label class="field-label">Description</label>{{ edit_form.description }}</div>
+      <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start;">Save Changes</button>
+    </form>
+  </details>
+
+  <div class="flex gap-8" style="margin-bottom:var(--space-6); flex-wrap:wrap;">
+    <div><div class="eyebrow">Revenue</div><div class="text-xl weight-semibold mono text-success">{{ revenue|money }}</div></div>
+    <div><div class="eyebrow">Expenses</div><div class="text-xl weight-semibold mono">{{ expenses|money }}</div></div>
+    <div><div class="eyebrow">Profit</div><div class="text-xl weight-semibold mono {% if profit >= 0 %}text-success{% else %}text-danger{% endif %}">{{ profit|money }}</div></div>
+    <div><div class="eyebrow">Focus this week</div><div class="text-xl weight-semibold mono">{{ focus_week_seconds|duration_compact }}</div></div>
+    <div><div class="eyebrow">Total focus</div><div class="text-xl weight-semibold mono">{{ focus_seconds|duration_compact }}</div></div>
+    <div><div class="eyebrow">Open tasks</div><div class="text-xl weight-semibold mono">{{ open_tasks_count }}</div></div>
+  </div>
+
+  <div class="tabs">
+    <a href="?tab=overview" class="tab {% if tab == 'overview' %}active{% endif %}">Overview</a>
+    <a href="?tab=tasks" class="tab {% if tab == 'tasks' %}active{% endif %}">Tasks</a>
+    <a href="?tab=people" class="tab {% if tab == 'people' %}active{% endif %}">People</a>
+    <a href="?tab=finance" class="tab {% if tab == 'finance' %}active{% endif %}">Finance</a>
+    <a href="?tab=focus" class="tab {% if tab == 'focus' %}active{% endif %}">Focus</a>
+    <a href="?tab=goals" class="tab {% if tab == 'goals' %}active{% endif %}">Goals</a>
+    <a href="?tab=notes" class="tab {% if tab == 'notes' %}active{% endif %}">Notes</a>
+  </div>
+
+  {% if tab == 'tasks' %}
+    {% if tasks %}
+      <div class="list">
+        {% for task in tasks %}
+          <div class="list-row"><div class="list-row-title text-sm">{{ task.title }}</div></div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><div class="empty-state-body">No tasks yet.</div></div>
+    {% endif %}
+  {% elif tab == 'people' %}
+    <form method="post" action="{% url 'projects:link_person' project.pk %}" class="flex gap-2" style="margin-bottom:var(--space-5); max-width:420px;">
+      {% csrf_token %}
+      <select name="person_id" class="select" style="flex:1;" required>
+        <option value="">Link a person…</option>
+        {% for person in available_people %}
+          <option value="{{ person.pk }}">{{ person.name }}{% if person.organization %} · {{ person.organization }}{% endif %}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-secondary">Link</button>
+    </form>
+
+    {% if project.people.all %}
+      <div class="list">
+        {% for person in project.people.all %}
+          <div class="list-row">
+            <a href="#" data-drawer-url="{% url 'people:detail_panel' person.pk %}" class="list-row-main flex items-center gap-3">
+              <span class="avatar">{{ person.name|slice:":2"|upper }}</span>
+              <div class="list-row-title text-sm">{{ person.name }}</div>
+            </a>
+            <form method="post" action="{% url 'projects:unlink_person' project.pk person.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-ghost btn-sm text-danger">Unlink</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><div class="empty-state-body">No people linked to this project.</div></div>
+    {% endif %}
+  {% elif tab == 'finance' %}
+    <div class="flex justify-end" style="margin-bottom:var(--space-3);">
+      <a href="{% url 'finance:transaction_new' %}?project={{ project.pk }}" class="btn btn-secondary btn-sm">{% icon "plus" size=13 %} Add Expense</a>
+    </div>
+    {% if transactions %}
+      <div class="list">
+        {% for txn in transactions %}
+          <a href="{% url 'finance:transaction_edit' txn.pk %}" class="list-row">
+            <div class="list-row-main"><div class="list-row-title text-sm">{{ txn.description|default:txn.get_type_display }}</div><div class="list-row-meta">{{ txn.date }}</div></div>
+            <span class="mono text-sm {% if txn.type == 'income' %}text-success{% endif %}">{{ txn.amount|money:txn.currency }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><div class="empty-state-body">No transactions linked yet.</div></div>
+    {% endif %}
+  {% elif tab == 'focus' %}
+    {% if sessions %}
+      <div class="list">
+        {% for session in sessions %}
+          <div class="list-row">
+            <div class="list-row-main"><div class="list-row-title text-sm">{{ session.course.name|default:"Focus session" }}</div><div class="list-row-meta">{{ session.started_at|date:"M j, H:i" }}</div></div>
+            <span class="mono text-sm">{{ session.duration_seconds|duration_compact }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><div class="empty-state-body">No focus sessions logged against this project yet.</div></div>
+    {% endif %}
+  {% elif tab == 'goals' %}
+    <div class="flex justify-end" style="margin-bottom:var(--space-3);">
+      <a href="{% url 'goals:list' %}?project={{ project.pk }}&new=1" class="btn btn-secondary btn-sm">{% icon "plus" size=13 %} New Goal</a>
+    </div>
+    {% if project.goals.all %}
+      <div class="list">
+        {% for goal in project.goals.all %}
+          <a href="{{ goal.get_absolute_url }}" class="list-row">
+            <div class="list-row-main">
+              <div class="list-row-title text-sm">{{ goal.title }}</div>
+              <div class="list-row-meta">{{ goal.get_goal_type_display }}{% if goal.deadline %} · Due {{ goal.deadline }}{% endif %}</div>
+            </div>
+            {% if goal.target_value %}<span class="mono text-sm">{{ goal.effective_current_value }} / {{ goal.target_value }} {{ goal.unit }}</span>{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><div class="empty-state-body">No goals linked to this project.</div></div>
+    {% endif %}
+  {% elif tab == 'notes' %}
+    <div class="flex justify-end" style="margin-bottom:var(--space-3);">
+      <a href="{% url 'notes:new' %}?project={{ project.pk }}" class="btn btn-secondary btn-sm">{% icon "plus" size=13 %} New Note</a>
+    </div>
+    {% if project.linked_notes.all %}
+      <div class="list">
+        {% for note in project.linked_notes.all %}
+          <a href="{{ note.get_absolute_url }}" class="list-row">
+            <div class="list-row-title text-sm">{{ note.title|default:"Untitled note" }}</div>
+            <div class="list-row-meta">{{ note.updated_at|date:"M j" }}</div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><div class="empty-state-body">No notes yet.</div></div>
+    {% endif %}
+  {% else %}
+    {% if project.description %}
+      <p class="text-secondary" style="margin-bottom:var(--space-6);">{{ project.description }}</p>
+    {% endif %}
+    <div class="section-header"><div class="eyebrow">Clients</div></div>
+    {% if project.clients %}
+      <div class="flex gap-2" style="flex-wrap:wrap;">
+        {% for client in project.clients %}<span class="badge badge-accent">{{ client.name }}</span>{% endfor %}
+      </div>
+    {% else %}
+      <div class="text-sm text-muted">No clients linked.</div>
+    {% endif %}
+
+    {% if project.journal_entries.count %}
+      <div class="text-sm" style="margin-top:var(--space-6);">
+        <a href="{% url 'journal:list' %}?project={{ project.pk }}" class="text-muted">{% icon "journal" size=13 %} {{ project.journal_entries.count }} journal entr{{ project.journal_entries.count|pluralize:"y,ies" }}</a>
+      </div>
+    {% endif %}
+
+    <div class="section-header" style="margin-top:var(--space-6);">
+      <div class="eyebrow">Upcoming events</div>
+      <a href="{% url 'calendar_app:event_new' %}?project={{ project.pk }}" class="text-xs text-muted">+ Schedule</a>
+    </div>
+    {% if upcoming_events %}
+      <div class="list">
+        {% for event in upcoming_events %}
+          <a href="{% url 'calendar_app:event_edit' event.pk %}" class="list-row">
+            <div class="list-row-title text-sm">{{ event.title }}</div>
+            <div class="list-row-meta">{{ event.start|date:"M j, H:i" }}</div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-sm text-muted">Nothing scheduled.</div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

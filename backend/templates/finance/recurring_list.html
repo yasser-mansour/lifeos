@@ -1,0 +1,81 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}Recurring — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  {% include "layout/_location_bar.html" %}
+  <div class="page-header">
+    <div><div class="page-title">Recurring Commitments</div><div class="page-subtitle">Expected, not yet actual — recording one creates a real transaction.</div></div>
+    <div class="page-actions"><button class="btn btn-primary" data-open-overlay="new-recurring">{% icon "plus" size=14 %} Add</button></div>
+  </div>
+
+  {% if items %}
+    <div class="list">
+      {% for item in items %}
+        <div class="list-row">
+          <div class="list-row-main">
+            <div class="list-row-title">{{ item.name }}</div>
+            <div class="list-row-meta">{{ item.get_frequency_display }} · Next {{ item.next_due_date }}{% if item.fund %} · {{ item.fund.name }}{% endif %}</div>
+          </div>
+          <span class="mono text-sm {% if item.is_income %}text-success{% endif %}" style="margin-right:var(--space-3);">{{ item.amount|money:item.currency }}</span>
+          <form method="post" action="{% url 'finance:recurring_record' item.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary btn-sm" {% if not item.account %}disabled title="Set an account first"{% endif %}>Record actual</button>
+          </form>
+          <button type="button" class="btn btn-ghost btn-sm text-muted" data-open-overlay="delete-recurring-{{ item.pk }}" aria-label="Delete">{% icon "trash" size=12 %}</button>
+        </div>
+        <div class="modal-backdrop" id="delete-recurring-{{ item.pk }}">
+          <div class="modal">
+            <div class="modal-header">Delete {{ item.name }}?</div>
+            <div class="modal-body stack-sm"><div class="text-sm text-muted">Actual transactions already recorded from it stay untouched.</div></div>
+            <form method="post" action="{% url 'finance:recurring_delete' item.pk %}">
+              {% csrf_token %}
+              <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-close-overlay="delete-recurring-{{ item.pk }}">Cancel</button>
+                <button type="submit" class="btn btn-danger">Delete</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "refresh" size=18 %}</div>
+      <div class="empty-state-title">No recurring commitments yet</div>
+      <div class="empty-state-body">Rent, subscriptions, retainers — add them once and LIFEOS tracks what's expected vs. what's actually happened.</div>
+      <button class="btn btn-primary btn-sm" data-open-overlay="new-recurring">Add Commitment</button>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal-backdrop{% if show_new %} open{% endif %}" id="new-recurring">
+  <div class="modal">
+    <div class="modal-header">Add Recurring Commitment</div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ form.name }}</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Amount</label>{{ form.amount }}</div>
+          <div class="field"><label class="field-label">Frequency</label>{{ form.frequency }}</div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Next due</label>{{ form.next_due_date }}</div>
+          <div class="field"><label class="field-label">Context</label>{{ form.context }}</div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Account</label>{{ form.account }}</div>
+          <div class="field"><label class="field-label">Fund</label>{{ form.fund }}</div>
+        </div>
+        <div class="field"><label class="field-label">Category</label>{{ form.category }}</div>
+        <label class="flex items-center gap-2 text-sm">{{ form.is_income }} This is income, not an outgoing commitment</label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-recurring">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

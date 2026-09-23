@@ -1,0 +1,145 @@
+{% extends "layout/app_shell.html" %}
+{% load icons lifeos_extras %}
+{% block title %}{% if txn %}Edit Transaction{% else %}Add Transaction{% endif %} — LIFEOS{% endblock %}
+{% block content %}
+<div class="page" style="max-width:560px;">
+  {% include "layout/_location_bar.html" %}
+  <div class="page-header"><div class="page-title">{% if txn %}Edit Transaction{% else %}Add Transaction{% endif %}</div></div>
+
+  <form method="post" id="txn-form">
+    {% csrf_token %}
+    <div class="stack">
+      <div class="field-row">
+        <div class="field"><label class="field-label">Amount</label>{{ form.amount }}</div>
+        <div class="field"><label class="field-label">Type</label>{{ form.type }}</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Account</label>{{ form.account }}</div>
+        <div class="field"><label class="field-label">Fund</label>{{ form.fund }}</div>
+      </div>
+      <div class="field"><label class="field-label">Category</label>{{ form.category }}</div>
+      <div class="field"><label class="field-label">Description</label>{{ form.description }}</div>
+      <div class="field"><label class="field-label">Date</label>{{ form.date }}</div>
+
+      <div class="field" id="direction-field" style="display:none;">
+        <label class="field-label">{{ form.direction.label }}</label>
+        {{ form.direction }}
+      </div>
+
+      <details class="form-advanced" {% if prefill_context or txn %}open{% endif %}>
+        <summary>More options</summary>
+        <div class="form-advanced-body">
+          <div class="field"><label class="field-label">Project</label>{{ form.project }}</div>
+          <div class="field-row">
+            <div class="field"><label class="field-label">Counterparty — person</label>{{ form.person }}</div>
+            <div class="field"><label class="field-label">Counterparty — organization</label>{{ form.organization }}</div>
+          </div>
+          <div class="field"><label class="field-label">Tags</label>{{ form.tags }}</div>
+          <div class="field"><label class="field-label">Notes</label>{{ form.notes }}</div>
+        </div>
+      </details>
+
+      <details class="form-advanced" id="allocation-details">
+        <summary>Split into allocations (advance payment / multi-purpose)</summary>
+        <div class="form-advanced-body">
+          <p class="text-xs text-muted">
+            Cash impact today stays exactly the amount above. These rows only control how it's <em>reported</em> — e.g. spread a 4-month advance rent payment across September–December, or split one payment across categories.
+          </p>
+          {{ formset.management_form }}
+          <div id="allocation-rows" class="stack-sm">
+            {% for alloc_form in formset %}
+              <div class="flex gap-2 items-start allocation-row">
+                {% for hidden in alloc_form.hidden_fields %}{{ hidden }}{% endfor %}
+                <div style="width:110px;">{{ alloc_form.amount }}</div>
+                <div style="flex:1;">{{ alloc_form.category }}</div>
+                <div style="width:130px;">{{ alloc_form.period }}</div>
+                <div style="flex:1;">{{ alloc_form.description }}</div>
+              </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" id="add-allocation-row" style="margin-top:var(--space-2);">{% icon "plus" size=12 %} Add split</button>
+          <div class="text-xs text-muted" style="margin-top:var(--space-2);">Remaining to allocate: <span id="allocation-remaining" class="mono">—</span></div>
+        </div>
+      </details>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block" style="margin-top:var(--space-6);">{% if txn %}Save Changes{% else %}Save Transaction{% endif %}</button>
+  </form>
+  {% if txn %}
+    <button type="button" class="btn btn-ghost btn-block text-danger" data-open-overlay="delete-transaction" style="margin-top:var(--space-3);">Delete Transaction</button>
+  {% endif %}
+</div>
+
+{% if txn %}
+<div class="modal-backdrop" id="delete-transaction">
+  <div class="modal">
+    <div class="modal-header">Delete transaction?</div>
+    <div class="modal-body stack-sm">
+      <div class="text-sm weight-medium">{{ txn.description|default:txn.get_type_display }}</div>
+      <div class="text-lg weight-semibold mono">{{ txn.amount|money:txn.currency }}</div>
+      <div class="text-sm text-muted">{{ txn.date }}</div>
+      <div class="text-sm text-muted" style="margin-top:var(--space-2);">This may change {{ txn.account.name }}'s balance and reports.</div>
+    </div>
+    <form method="post" action="{% url 'finance:transaction_delete' txn.pk %}">
+      {% csrf_token %}
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="delete-transaction">Cancel</button>
+        <button type="submit" class="btn btn-danger">Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<template id="allocation-empty-form">
+  <div class="flex gap-2 items-start allocation-row">
+    {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+    <div style="width:110px;">{{ formset.empty_form.amount }}</div>
+    <div style="flex:1;">{{ formset.empty_form.category }}</div>
+    <div style="width:130px;">{{ formset.empty_form.period }}</div>
+    <div style="flex:1;">{{ formset.empty_form.description }}</div>
+  </div>
+</template>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  const typeField = document.getElementById("id_type");
+  const directionField = document.getElementById("direction-field");
+  function syncDirection() {
+    const showFor = ["adjustment", "other"];
+    directionField.style.display = showFor.includes(typeField.value) ? "" : "none";
+  }
+  typeField.addEventListener("change", syncDirection);
+  syncDirection();
+
+  const addBtn = document.getElementById("add-allocation-row");
+  const totalForms = document.getElementById("id_allocations-TOTAL_FORMS");
+  const rowsContainer = document.getElementById("allocation-rows");
+  const template = document.getElementById("allocation-empty-form").innerHTML;
+
+  addBtn.addEventListener("click", function () {
+    const index = parseInt(totalForms.value, 10);
+    const html = template.replace(/__prefix__/g, index);
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html.trim();
+    rowsContainer.appendChild(wrapper.firstElementChild);
+    totalForms.value = index + 1;
+    updateRemaining();
+  });
+
+  function updateRemaining() {
+    const amount = parseFloat(document.getElementById("id_amount").value) || 0;
+    let allocated = 0;
+    rowsContainer.querySelectorAll('input[name$="-amount"]').forEach((input) => {
+      allocated += parseFloat(input.value) || 0;
+    });
+    const remaining = (amount - allocated).toFixed(2);
+    document.getElementById("allocation-remaining").textContent = remaining;
+  }
+  document.getElementById("txn-form").addEventListener("input", updateRemaining);
+  updateRemaining();
+})();
+</script>
+{% endblock %}

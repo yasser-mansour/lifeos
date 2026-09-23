@@ -1,0 +1,134 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}People & Organizations — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">People & Organizations</div>
+      <div class="page-subtitle">Everyone and everything you deal with financially — clients, family, banks, and service providers alike.</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-secondary" data-open-overlay="new-org">{% icon "plus" size=14 %} Add Organization</button>
+      <button class="btn btn-primary" data-open-overlay="new-person">{% icon "plus" size=14 %} Add Person</button>
+    </div>
+  </div>
+
+  <form method="get" class="flex gap-2 items-center" style="margin-bottom:var(--space-4); flex-wrap:wrap;">
+    <input class="input" type="text" name="q" value="{{ query }}" placeholder="Search people & organizations…" style="max-width:280px;">
+    <div class="flex gap-1">
+      <a href="?type=&q={{ query }}" class="btn btn-sm {% if not type_filter %}btn-secondary{% else %}btn-ghost{% endif %}">All</a>
+      <a href="?type=person&q={{ query }}" class="btn btn-sm {% if type_filter == 'person' %}btn-secondary{% else %}btn-ghost{% endif %}">People</a>
+      <a href="?type=organization&q={{ query }}" class="btn btn-sm {% if type_filter == 'organization' %}btn-secondary{% else %}btn-ghost{% endif %}">Organizations</a>
+    </div>
+    <select class="select" name="relationship" onchange="this.form.submit()" style="max-width:180px;">
+      <option value="">Any relationship</option>
+      {% for value, label in relationship_choices %}
+        <option value="{{ value }}" {% if relationship_filter == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  {% if entries %}
+    <div class="list">
+      {% for entry in entries %}
+        {% if entry.kind == "person" %}
+          <a href="#" data-drawer-url="{% url 'people:detail_panel' entry.obj.pk %}" class="list-row">
+            <span class="avatar">{{ entry.obj.name|slice:":2"|upper }}</span>
+            <div class="list-row-main">
+              <div class="list-row-title">{{ entry.obj.name }}</div>
+              <div class="list-row-meta">
+                {{ entry.obj.organization|default:"" }}
+                {% for label in entry.obj.relationship_labels %}<span class="badge badge-neutral">{{ label }}</span>{% endfor %}
+              </div>
+            </div>
+            {% if entry.obj.next_follow_up %}<span class="list-row-trail text-xs text-muted">Follow up {{ entry.obj.next_follow_up }}</span>{% endif %}
+          </a>
+        {% else %}
+          <a href="#" data-drawer-url="{% url 'people:org_detail_panel' entry.obj.pk %}" class="list-row">
+            <span class="avatar avatar-square">{% icon "briefcase" size=15 %}</span>
+            <div class="list-row-main">
+              <div class="list-row-title">{{ entry.obj.name }}</div>
+              <div class="list-row-meta">
+                {{ entry.obj.get_category_display }}
+                {% for label in entry.obj.relationship_labels %}<span class="badge badge-neutral">{{ label }}</span>{% endfor %}
+              </div>
+            </div>
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "people" size=18 %}</div>
+      <div class="empty-state-title">Nothing here yet</div>
+      <div class="empty-state-body">Add people and organizations to keep them connected to your projects and finances.</div>
+      <button class="btn btn-primary btn-sm" data-open-overlay="new-person">Add Person</button>
+    </div>
+  {% endif %}
+</div>
+
+<div class="modal-backdrop{% if show_new %} open{% endif %}" id="new-person">
+  <div class="modal">
+    <div class="modal-header">Add Person</div>
+    <form method="post" action="{% url 'people:create' %}">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ form.name }}</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Email</label>{{ form.email }}</div>
+          <div class="field"><label class="field-label">Phone</label>{{ form.phone }}</div>
+        </div>
+        <div class="field"><label class="field-label">Organization</label>{{ form.organization }}</div>
+        <div class="field">
+          <label class="field-label">Relationship</label>
+          <div class="flex gap-3" style="flex-wrap:wrap;">{{ form.relationship_types }}</div>
+        </div>
+        <details class="form-advanced">
+          <summary>More options</summary>
+          <div class="form-advanced-body">
+            <div class="field"><label class="field-label">Next follow-up</label>{{ form.next_follow_up }}</div>
+            <div class="field"><label class="field-label">Notes</label>{{ form.notes }}</div>
+          </div>
+        </details>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-person">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Person</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop{% if show_new_org %} open{% endif %}" id="new-org">
+  <div class="modal">
+    <div class="modal-header">Add Organization</div>
+    <form method="post" action="{% url 'people:org_create' %}">
+      {% csrf_token %}
+      <div class="modal-body stack">
+        <div class="field"><label class="field-label">Name</label>{{ org_form.name }}</div>
+        <div class="field"><label class="field-label">Category</label>{{ org_form.category }}</div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Email</label>{{ org_form.email }}</div>
+          <div class="field"><label class="field-label">Phone</label>{{ org_form.phone }}</div>
+        </div>
+        <div class="field"><label class="field-label">Website</label>{{ org_form.website }}</div>
+        <div class="field">
+          <label class="field-label">Relationship</label>
+          <div class="flex gap-3" style="flex-wrap:wrap;">{{ org_form.relationship_types }}</div>
+        </div>
+        <details class="form-advanced">
+          <summary>More options</summary>
+          <div class="form-advanced-body">
+            <div class="field"><label class="field-label">Notes</label>{{ org_form.notes }}</div>
+          </div>
+        </details>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-overlay="new-org">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Organization</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

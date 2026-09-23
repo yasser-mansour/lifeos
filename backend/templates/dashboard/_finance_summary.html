@@ -1,0 +1,21 @@
+{% load icons lifeos_extras %}
+{% if finance_has_accounts %}
+  <div class="text-3xl weight-semibold mono" style="margin-bottom:var(--space-3);">{{ finance_total|money }}</div>
+  <div class="stack-sm">
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-secondary">Personal</span>
+      <span class="text-md weight-medium mono">{{ finance_personal_total|money }}</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-secondary">Business</span>
+      <span class="text-md weight-medium mono">{{ finance_business_total|money }}</span>
+    </div>
+  </div>
+{% else %}
+  <div class="empty-state" style="padding:var(--space-6);">
+    <div class="empty-state-icon">{% icon "finance" size=18 %}</div>
+    <div class="empty-state-title">No accounts yet</div>
+    <div class="empty-state-body">Add your first account to start tracking balances.</div>
+    <a href="{% url 'finance:overview' %}" class="btn btn-primary btn-sm">Add Account</a>
+  </div>
+{% endif %}

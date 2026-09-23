@@ -1,0 +1,35 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Notes — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div><div class="page-title">Notes</div></div>
+    <div class="page-actions"><a href="{% url 'notes:new' %}" class="btn btn-primary">{% icon "plus" size=14 %} New Note</a></div>
+  </div>
+
+  <form method="get" style="margin-bottom:var(--space-5);">
+    <input class="input" type="text" name="q" value="{{ query }}" placeholder="Search notes…" style="max-width:320px;">
+  </form>
+
+  {% if notes %}
+    <div class="list">
+      {% for note in notes %}
+        <a href="{{ note.get_absolute_url }}" class="list-row">
+          <div class="list-row-main">
+            <div class="list-row-title">{{ note.title|default:"Untitled" }}</div>
+            <div class="list-row-meta">{{ note.content|truncatewords:18 }}{% if note.linked_to %} · linked to {{ note.linked_to }}{% endif %}</div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "notes" size=18 %}</div>
+      <div class="empty-state-title">No notes yet</div>
+      <div class="empty-state-body">Quick notes that can link to a project, task, person, course, or goal.</div>
+      <a href="{% url 'notes:new' %}" class="btn btn-primary btn-sm">New Note</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

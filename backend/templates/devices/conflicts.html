@@ -1,0 +1,63 @@
+{% extends "layout/app_shell.html" %}
+{% load icons %}
+{% block title %}Sync Conflicts — LIFEOS{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Sync Conflicts</div>
+      <div class="text-sm text-muted">A device tried to update a record that had already changed on the Mac. Pick which version to keep.</div>
+    </div>
+    <div class="page-actions"><a href="{% url 'devices:list' %}" class="btn btn-secondary">Back to Devices</a></div>
+  </div>
+
+  {% if rows %}
+    <div class="list">
+      {% for row in rows %}
+        <div class="list-row" style="align-items:flex-start;">
+          <div class="list-row-main">
+            <div class="list-row-title">
+              {{ row.conflict.get_entity_type_display }}
+              <span class="badge badge-neutral">{{ row.conflict.device.name|default:"Unknown device" }}</span>
+            </div>
+            <div class="list-row-meta">{{ row.conflict.created_at|timesince }} ago</div>
+            <div class="flex gap-4" style="margin-top:8px;">
+              <div class="stack" style="min-width:200px;">
+                <div class="text-xs text-muted">ON THE MAC</div>
+                <div class="text-sm">{{ row.server_summary }}</div>
+              </div>
+              <div class="stack" style="min-width:200px;">
+                <div class="text-xs text-muted">FROM THE DEVICE</div>
+                <div class="text-sm">{{ row.local_summary }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-1" style="flex-shrink:0;">
+            <form method="post" action="{% url 'devices:conflict_resolve' row.conflict.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="keep_mac">
+              <button type="submit" class="btn btn-secondary btn-sm">Keep Mac</button>
+            </form>
+            <form method="post" action="{% url 'devices:conflict_resolve' row.conflict.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="keep_local">
+              <button type="submit" class="btn btn-secondary btn-sm" {% if not row.instance_exists %}disabled{% endif %}>Keep Device</button>
+            </form>
+            <form method="post" action="{% url 'devices:conflict_resolve' row.conflict.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="keep_both">
+              <button type="submit" class="btn btn-primary btn-sm">Keep Both</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">{% icon "sync" size=18 %}</div>
+      <div class="empty-state-title">No conflicts</div>
+      <div class="empty-state-body">Your devices and this Mac agree on everything.</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

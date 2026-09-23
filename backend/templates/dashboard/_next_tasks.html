@@ -1,0 +1,30 @@
+{% load icons %}
+{% if next_tasks %}
+  <div class="list">
+    {% for task in next_tasks %}
+      <div class="list-row">
+        <form method="post" action="{% url 'tasks:complete' task.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="/">
+          <button type="submit" class="checkbox-circle" aria-label="Toggle complete"></button>
+        </form>
+        <a href="#" data-drawer-url="{% url 'tasks:detail_panel' task.pk %}" class="list-row-main">
+          <div class="list-row-title">{{ task.title }}</div>
+          <div class="list-row-meta">
+            {% if task.project %}{{ task.project.name }}{% elif task.course %}{{ task.course.name }}{% endif %}
+            {% if task.due_date %}
+              <span>· {% if task.is_overdue %}<span class="text-danger">Overdue {{ task.due_date }}</span>{% else %}Due {{ task.due_date }}{% endif %}</span>
+            {% endif %}
+            {% if task.priority == 'high' or task.priority == 'urgent' %}<span>· {{ task.get_priority_display }}</span>{% endif %}
+          </div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state" style="padding:var(--space-6);">
+    <div class="empty-state-icon">{% icon "check" size=18 %}</div>
+    <div class="empty-state-title">Nothing next</div>
+    <div class="empty-state-body">Open tasks will show up here, most urgent first.</div>
+  </div>
+{% endif %}

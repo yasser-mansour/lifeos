@@ -1,0 +1,41 @@
+{% extends "layout/base.html" %}
+{% load icons %}
+{% block body %}
+<div class="app-shell{% if immersive %} app-shell-immersive{% endif %}">
+  {% if immersive %}
+    <a href="{% url 'focus:overview' %}" class="immersive-exit" aria-label="Leave focus mode — session keeps running">{% icon "chevron-left" size=13 %} LIFEOS</a>
+  {% else %}
+    {% include "layout/_sidebar.html" %}
+  {% endif %}
+  <div class="mobile-sidebar-backdrop" data-close-sidebar></div>
+  <div class="flex-col" style="min-width:0; flex:1;">
+    {% if not immersive %}
+      <div class="mobile-topbar">
+        <button class="btn btn-ghost btn-icon btn-sm" data-toggle-sidebar type="button" aria-label="Menu">
+          {% icon "menu" size=16 %}
+        </button>
+        <span class="weight-semibold text-sm">LIFEOS</span>
+      </div>
+    {% endif %}
+    <main class="main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% include "layout/_command_palette.html" %}
+<div class="drawer-backdrop" id="detail-drawer">
+  <div class="drawer">
+    <div class="drawer-body"></div>
+  </div>
+</div>
+<div class="toast-stack"></div>
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    {% for message in messages %}
+      LifeOS.toast("{{ message|escapejs }}", "{% if message.tags == 'error' %}error{% else %}success{% endif %}");
+    {% endfor %}
+  });
+</script>
+{% endif %}
+{% endblock %}
